@@ -139,7 +139,7 @@ Main = (function()
 	Main.AppControls = {}
 	Main.Apps = Apps
 	Main.MenuApps = {}
-	Main.GitRepoName = "LorekeeperZinnia/Dex"
+	Main.GitRepoName = "peyton2465/Dex"
 	
 	Main.DisplayOrders = {
 		SideWindow = 8,
@@ -168,7 +168,7 @@ Main = (function()
 	Main.Error = function(str)
 		if rconsoleprint then
 			rconsoleprint("DEX ERROR: "..tostring(str).."\n")
-			wait(9e9)
+			coroutine.yield()
 		else
 			error(str)
 		end

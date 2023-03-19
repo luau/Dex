@@ -69,7 +69,7 @@ local function RepoPath(url)
 
 		return path
 	else
-		return "phoriah/Dex"
+		return "lua-u/Dex"
 	end
 end
 globalenv = globalenv or getgenv and getgenv() or _G or shared

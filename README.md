@@ -1,8 +1,11 @@
 # Loadstring
 
 ```lua
-local link = "https://raw.githubusercontent.com/phoriah/Dex/master/out.lua"
+local RepositoryName = "Dex"
+local File = "out.lua"
+local link = "https://raw.githubusercontent.com/lua-u/"..RepositoryName.."/master/"..File
 loadstring(game:HttpGet(link, true), "Dex")(link)
+
 ```
 
 # Intro

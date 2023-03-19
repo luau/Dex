@@ -17,7 +17,6 @@ local finder, globalcontainer = loadstring(
 	"UniversalMethodFinder"
 )()
 
--- print()
 if debug then
 	if debug.getupvalues then
 		globalcontainer.getupvalues = debug.getupvalues
@@ -453,7 +452,7 @@ Main = (function()
 		second = true
 	end
 	]]
-	local pcall, next,ipairs = pcall, next, ipairs
+	local pcall, next, ipairs = pcall, next, ipairs
 	Main.LoadSettings = function()
 		local s, data = pcall(env.readfile or error, "DexSettings.json")
 		if s and data and data ~= "" then
@@ -1809,6 +1808,6 @@ end)()
 -- Start
 Main.Init()
 
-for i, v in ipairs(Main.MissingEnv) do
-	print(i, v)
-end
+-- for i, v in ipairs(Main.MissingEnv) do
+-- 	print(i, v)
+-- end

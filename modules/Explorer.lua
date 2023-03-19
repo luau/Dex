@@ -2885,14 +2885,14 @@ return search]==]
 		if gameProcessedEvent then
 			return
 		end
-		print(Settings.Explorer.ClickSelect, input.UserInputType == Enum.UserInputType.MouseButton1)
+
 		if Settings.Explorer.ClickSelect and input.UserInputType == Enum.UserInputType.MouseButton1 then
 			local Target = mouse.Target
-			print("targ")
+			
 			if not Target then
 				return
 			end
-			print(Target)
+			
 			if not Lib.IsAltDown() then
 				local Model = Target:FindFirstAncestorOfClass("Model")
 				if Model then
@@ -2900,7 +2900,7 @@ return search]==]
 				end
 			end
 			local node = nodes[Target]
-			print(node)
+			
 			if not node then
 				return
 			end
@@ -2910,9 +2910,6 @@ return search]==]
 				table.insert(newSelection, node)
 			end
 			if Lib.IsCtrlDown() then
-				for _, v in next, sList do
-					print(_, v)
-				end
 				for i = 1, #sList do
 					local selectednode = sList[i]
 					if selectednode ~= node then
@@ -2928,7 +2925,6 @@ return search]==]
 				Explorer.Refresh()
 			end
 		elseif input.UserInputType == Enum.UserInputType.MouseButton3 then
-			print("turned on")
 			Settings.Explorer.ClickSelect = not Settings.Explorer.ClickSelect
 		end
 	end)

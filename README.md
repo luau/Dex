@@ -1,3 +1,10 @@
+# Loadstring
+
+```lua
+local link = "https://raw.githubusercontent.com/phoriah/Dex/master/out.lua"
+loadstring(game:HttpGet(link, true), "Dex")(link)
+```
+
 # Intro
 New Dex was planned to be a debugging suite. Only the Explorer part is completed, probably nothing else will be.
 

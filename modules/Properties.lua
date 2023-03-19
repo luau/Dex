@@ -8,7 +8,7 @@
 local Main, Lib, Apps, Settings -- Main Containers
 local Explorer, Properties, ScriptViewer, Notebook -- Major Apps
 local API, RMD, env, service, plr, create, createSimple -- Main Locals
-
+local pcall, next, ipairs = pcall, next, ipairs
 local function initDeps(data)
 	Main = data.Main
 	Lib = data.Lib
@@ -530,7 +530,7 @@ local function main()
 
 			if showingAttrs and attrCount < maxAttrs then
 				local attrs = getAttributes(obj)
-				for name, val in pairs(attrs) do
+				for name, val in next, attrs do
 					local typ = typeof(val)
 					if not foundAttrs[name] then
 						local category = (typ == "Instance" and "Class") or (typ == "EnumItem" and "Enum") or "Other"
@@ -624,7 +624,7 @@ local function main()
 
 	Properties.MakeSubProp = function(prop, subName, valueType, displayName)
 		local subProp = {}
-		for i, v in pairs(prop) do
+		for i, v in next, prop do
 			subProp[i] = v
 		end
 		subProp.RootType = subProp.RootType or subProp.ValueType
@@ -863,7 +863,7 @@ local function main()
 			end
 			if input.UserInputType == Enum.UserInputType.MouseMovement and not nameFrame.PropName.TextFits then
 				local fullNameFrame = Properties.FullNameFrame
-				local nameArr =(prop.Class .. "." .. prop.Name .. (prop.SubName or "")):split( ".")
+				local nameArr = (prop.Class .. "." .. prop.Name .. (prop.SubName or "")):split(".")
 				local dispName = prop.DisplayName or nameArr[#nameArr]
 				local sizeX =
 					service.TextService:GetTextSize(dispName, 14, Enum.Font.SourceSans, Vector2.new(math.huge, 20)).X
@@ -1304,7 +1304,7 @@ local function main()
 			editor.OnMoreColors:Connect(function() -- TODO: Special Case BasePart.BrickColor to BasePart.Color
 				editor:Close()
 				local colProp
-				for i, v in pairs(API.Classes.BasePart.Properties) do
+				for i, v in next, API.Classes.BasePart.Properties do
 					if v.Name == "Color" then
 						colProp = v
 						break
@@ -1463,7 +1463,7 @@ local function main()
 			propVal = obj[prop.Name]
 		end
 		if prop.SubName then
-			local indexes =prop.SubName:split( ".")
+			local indexes = prop.SubName:split(".")
 			for i = 1, #indexes do
 				local indexName = indexes[i]
 				if #indexName > 0 and propVal then
@@ -1960,7 +1960,7 @@ local function main()
 						elseif rootTypeName == "Faces" then
 							local faces = {}
 							local faceList = { "Back", "Bottom", "Front", "Left", "Right", "Top" }
-							for _, face in pairs(faceList) do
+							for _, face in next, faceList do
 								local val
 								if subName == "." .. face then
 									val = setVal
@@ -1975,7 +1975,7 @@ local function main()
 						elseif rootTypeName == "Axes" then
 							local axes = {}
 							local axesList = { "X", "Y", "Z" }
-							for _, axe in pairs(axesList) do
+							for _, axe in next, axesList do
 								local val
 								if subName == "." .. axe then
 									val = setVal
@@ -2662,7 +2662,7 @@ local function main()
 
 		-- Vars
 		categoryOrder = API.CategoryOrder
-		for category, _ in next, categoryOrder do
+		for category in next, categoryOrder do
 			if not Properties.CollapsedCategories[category] then
 				expanded["CAT_" .. category] = true
 			end

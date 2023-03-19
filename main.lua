@@ -17,7 +17,7 @@ local finder, globalcontainer = loadstring(
 	"UniversalMethodFinder"
 )()
 
-print()
+-- print()
 if debug then
 	if debug.getupvalues then
 		globalcontainer.getupvalues = debug.getupvalues
@@ -88,6 +88,7 @@ DefaultSettings = (function()
 			Sorting = true,
 			TeleportToOffset = Vector3.new(0, 0, 0),
 			ClickToRename = true,
+			ClickSelect = true,
 			AutoUpdateSearch = true,
 			AutoUpdateMode = 0, -- 0 Default, 1 no tree update, 2 no descendant events, 3 frozen
 			PartSelectionBox = true,
@@ -169,12 +170,12 @@ local plr = service.Players.LocalPlayer or service.Players.PlayerAdded:Wait()
 
 local create = function(data)
 	local insts = {}
-	for i, v in pairs(data) do
+	for i, v in ipairs(data) do
 		insts[v[1]] = Instance.new(v[2])
 	end
 
-	for _, v in pairs(data) do
-		for prop, val in pairs(v[3]) do
+	for _, v in ipairs(data) do
+		for prop, val in next, v[3] do
 			if type(val) == "table" then
 				insts[v[1]][prop] = insts[val[1]]
 			else
@@ -329,7 +330,7 @@ Main = (function()
 	end
 
 	Main.LoadModules = function()
-		for i, v in pairs(Main.ModuleList) do
+		for i, v in ipairs(Main.ModuleList) do
 			local s, e = pcall(Main.LoadModule, v)
 			if not s then
 				Main.Error("FAILED LOADING " + v + " CAUSE " + e)
@@ -349,7 +350,7 @@ Main = (function()
 		}
 
 		Main.AppControls.Lib.InitAfterMain(appTable)
-		for i, v in pairs(Main.ModuleList) do
+		for i, v in ipairs(Main.ModuleList) do
 			local control = Main.AppControls[v]
 			if control then
 				control.InitAfterMain(appTable)
@@ -452,13 +453,14 @@ Main = (function()
 		second = true
 	end
 	]]
-
+	local pcall, next,ipairs = pcall, next, ipairs
 	Main.LoadSettings = function()
 		local s, data = pcall(env.readfile or error, "DexSettings.json")
 		if s and data and data ~= "" then
 			local s, decoded = service.HttpService:JSONDecode(data)
 			if s and decoded then
 				for i, v in next, decoded do
+					-- ? Read settings then write to the file
 				end
 			else
 				-- TODO: Notification
@@ -470,7 +472,7 @@ Main = (function()
 
 	Main.ResetSettings = function()
 		local function recur(t, res)
-			for set, val in pairs(t) do
+			for set, val in next, t do
 				if type(val) == "table" and val._Recurse then
 					if type(res[set]) ~= "table" then
 						res[set] = {}
@@ -524,7 +526,7 @@ Main = (function()
 			table.insert(t, pos, item)
 		end
 
-		for _, class in pairs(api.Classes) do
+		for _, class in ipairs(api.Classes) do
 			local newClass = {}
 			newClass.Name = class.Name
 			newClass.Superclass = class.Superclass
@@ -535,18 +537,18 @@ Main = (function()
 			newClass.Tags = {}
 
 			if class.Tags then
-				for c, tag in pairs(class.Tags) do
+				for c, tag in ipairs(class.Tags) do
 					newClass.Tags[tag] = true
 				end
 			end
-			for __, member in pairs(class.Members) do
+			for _, member in ipairs(class.Members) do
 				local newMember = {}
 				newMember.Name = member.Name
 				newMember.Class = class.Name
 				newMember.Security = member.Security
 				newMember.Tags = {}
 				if member.Tags then
-					for c, tag in pairs(member.Tags) do
+					for c, tag in ipairs(member.Tags) do
 						newMember.Tags[tag] = true
 					end
 				end
@@ -566,13 +568,13 @@ Main = (function()
 				elseif mType == "Function" then
 					newMember.Parameters = {}
 					newMember.ReturnType = member.ReturnType.Name
-					for c, param in pairs(member.Parameters) do
+					for c, param in ipairs(member.Parameters) do
 						table.insert(newMember.Parameters, { Name = param.Name, Type = param.Type.Name })
 					end
 					table.insert(newClass.Functions, newMember)
 				elseif mType == "Event" then
 					newMember.Parameters = {}
-					for c, param in pairs(member.Parameters) do
+					for c, param in ipairs(member.Parameters) do
 						table.insert(newMember.Parameters, { Name = param.Name, Type = param.Type.Name })
 					end
 					table.insert(newClass.Events, newMember)
@@ -582,22 +584,22 @@ Main = (function()
 			classes[class.Name] = newClass
 		end
 
-		for _, class in pairs(classes) do
+		for _, class in next, classes do
 			class.Superclass = classes[class.Superclass]
 		end
 
-		for _, enum in pairs(api.Enums) do
+		for _, enum in ipairs(api.Enums) do
 			local newEnum = {}
 			newEnum.Name = enum.Name
 			newEnum.Items = {}
 			newEnum.Tags = {}
 
 			if enum.Tags then
-				for c, tag in pairs(enum.Tags) do
+				for c, tag in ipairs(enum.Tags) do
 					newEnum.Tags[tag] = true
 				end
 			end
-			for __, item in pairs(enum.Items) do
+			for _, item in ipairs(enum.Items) do
 				local newItem = {}
 				newItem.Name = item.Name
 				newItem.Value = item.Value
@@ -615,7 +617,7 @@ Main = (function()
 
 			local currentClass = classes[class]
 			while currentClass do
-				for _, entry in pairs(currentClass[member]) do
+				for _, entry in next, currentClass[member] do
 					result[#result + 1] = entry
 				end
 				currentClass = currentClass.Superclass
@@ -682,13 +684,13 @@ Main = (function()
 		local propertyOrders = {}
 
 		local classes, enums = {}, {}
-		for _, class in pairs(classList) do
+		for _, class in next, classList do
 			local className = ""
-			for _, child in pairs(class.children) do
+			for _, child in next, class.children do
 				if child.tag == "Properties" then
 					local data = { Properties = {}, Functions = {} }
 					local props = child.children
-					for _, prop in pairs(props) do
+					for _, prop in next, props do
 						local name = prop.attrs.name
 						name = name:sub(1, 1):upper() .. name:sub(2)
 						data[name] = prop.children[1].text
@@ -697,12 +699,12 @@ Main = (function()
 					classes[className] = data
 				elseif child.attrs.class == "ReflectionMetadataProperties" then
 					local members = child.children
-					for _, member in pairs(members) do
+					for _, member in next, members do
 						if member.attrs.class == "ReflectionMetadataMember" then
 							local data = {}
 							if member.children[1].tag == "Properties" then
 								local props = member.children[1].children
-								for _, prop in pairs(props) do
+								for _, prop in next, props do
 									if prop.attrs then
 										local name = prop.attrs.name
 										name = name:sub(1, 1):upper() .. name:sub(2)
@@ -723,12 +725,12 @@ Main = (function()
 					end
 				elseif child.attrs.class == "ReflectionMetadataFunctions" then
 					local members = child.children
-					for _, member in pairs(members) do
+					for _, member in next, members do
 						if member.attrs.class == "ReflectionMetadataMember" then
 							local data = {}
 							if member.children[1].tag == "Properties" then
 								local props = member.children[1].children
-								for _, prop in pairs(props) do
+								for _, prop in next, props do
 									if prop.attrs then
 										local name = prop.attrs.name
 										name = name:sub(1, 1):upper() .. name:sub(2)
@@ -743,13 +745,13 @@ Main = (function()
 			end
 		end
 
-		for _, enum in pairs(enumList) do
+		for _, enum in next, enumList do
 			local enumName = ""
-			for _, child in pairs(enum.children) do
+			for _, child in next, enum.children do
 				if child.tag == "Properties" then
 					local data = { Items = {} }
 					local props = child.children
-					for _, prop in pairs(props) do
+					for _, prop in next, props do
 						local name = prop.attrs.name
 						name = name:sub(1, 1):upper() .. name:sub(2)
 						data[name] = prop.children[1].text
@@ -760,7 +762,7 @@ Main = (function()
 					local data = {}
 					if child.children[1].tag == "Properties" then
 						local props = child.children[1].children
-						for _, prop in pairs(props) do
+						for _, prop in next, props do
 							local name = prop.attrs.name
 							name = name:sub(1, 1):upper() .. name:sub(2)
 							data[name] = prop.children[1].text
@@ -800,7 +802,7 @@ Main = (function()
 		Main.RawDocs = rawDocs
 
 		local classes = {}
-		for i, v in pairs(service.HttpService:JSONDecode(rawDocs)) do
+		for i, v in next, service.HttpService:JSONDecode(rawDocs) do
 			local name = i:match("@roblox/globaltype/(%w+)$")
 			if name then
 				classes[name] = v
@@ -1744,7 +1746,7 @@ Main = (function()
 			local fileVer = Lib.ReadFile("dex/deps_version.dat")
 			Main.ClientVersion = Version()
 			if fileVer then
-				Main.DepsVersionData = fileVer:split( "\n")
+				Main.DepsVersionData = fileVer:split("\n")
 				if Main.LocalDepsUpToDate() then
 					Main.RobloxVersion = Main.DepsVersionData[2]
 				end
@@ -1807,4 +1809,6 @@ end)()
 -- Start
 Main.Init()
 
---for i,v in pairs(Main.MissingEnv) do print(i,v) end
+for i, v in ipairs(Main.MissingEnv) do
+	print(i, v)
+end

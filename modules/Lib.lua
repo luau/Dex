@@ -8,7 +8,7 @@
 local Main, Lib, Apps, Settings -- Main Containers
 local Explorer, Properties, ScriptViewer, Notebook -- Major Apps
 local API, RMD, env, service, plr, create, createSimple -- Main Locals
-
+local pcall, next, ipairs = pcall, next, ipairs
 local function initDeps(data)
 	Main = data.Main
 	Lib = data.Lib
@@ -44,7 +44,7 @@ local function main()
 		local type = type
 		local function copy(t)
 			local res = {}
-			for i, v in pairs(t) do
+			for i, v in next, t do
 				if v == SIGNAL then
 					res[i] = Lib.Signal.new()
 				elseif type(v) == "table" then
@@ -101,7 +101,7 @@ local function main()
 		if gui == nil then
 			return false
 		end
-		local mouse = Main.Mouse
+		local mouse = Main.Mouse or plr:GetMouse()
 		local guiPosition = gui.AbsolutePosition
 		local guiSize = gui.AbsoluteSize
 
@@ -119,6 +119,11 @@ local function main()
 	Lib.IsCtrlDown = function()
 		return service.UserInputService:IsKeyDown(Enum.KeyCode.LeftControl)
 			or service.UserInputService:IsKeyDown(Enum.KeyCode.RightControl)
+	end
+
+	Lib.IsAltDown = function()
+		return service.UserInputService:IsKeyDown(Enum.KeyCode.LeftAlt)
+			or service.UserInputService:IsKeyDown(Enum.KeyCode.RightAlt)
 	end
 
 	Lib.CreateArrow = function(size, num, dir)
@@ -178,7 +183,7 @@ local function main()
 			return arrowFrame
 		elseif dir == "right" then
 			for i = 1, num do
-				 createSimple("Frame", {
+				createSimple("Frame", {
 					BackgroundColor3 = Color3.new(220 / 255, 220 / 255, 220 / 255),
 					BorderSizePixel = 0,
 					Position = UDim2.new(
@@ -201,14 +206,14 @@ local function main()
 			-- Only exists to parse RMD
 			-- from https://github.com/jonathanpoelen/xmlparser
 
-			local string, print, pairs = string, print, pairs
+			local string, print, next = string, print, next
 
 			-- https://lua-users.org/wiki/StringTrim
 			-- local trim = function(s)
 			-- 	local from = s:match("^%s*()")
 			-- 	return from > #s and "" or s:match(".*%S", from)
 			-- end
-local byte = string.byte
+			local byte = string.byte
 			-- local gtchar = (">"):byte(1)
 			local slashchar = byte("/")
 			-- local D = string.byte("D", 1)
@@ -246,9 +251,7 @@ local byte = string.byte
 						local a = {}
 						if #closed == 0 then
 							local len = 0
-							for all, aname, _, value, starttxt in
-							txt:gmatch( "(.-([-_%w]+)%s*=%s*(.)(.-)%3%s*(/?>?))")
-							do
+							for all, aname, _, value, starttxt in txt:gmatch("(.-([-_%w]+)%s*=%s*(.)(.-)%3%s*(/?>?))") do
 								len = len + #all
 								a[aname] = value
 								if #starttxt ~= 0 then
@@ -305,7 +308,7 @@ local byte = string.byte
 
 			function createEntityTable(docEntities, resultEntities)
 				entities = resultEntities or defaultEntityTable()
-				for _, e in pairs(docEntities) do
+				for _, e in next, docEntities do
 					e.value = replaceEntities(e.value, entities)
 					entities[e.name] = e.value
 				end
@@ -487,7 +490,7 @@ local byte = string.byte
 
 	Lib.ColorToBytes = function(col)
 		local round = math.round
-		return ("%d, %d, %d"):format( round(col.r * 255), round(col.g * 255), round(col.b * 255))
+		return ("%d, %d, %d"):format(round(col.r * 255), round(col.g * 255), round(col.b * 255))
 	end
 
 	Lib.ReadFile = function(filename)
@@ -554,7 +557,7 @@ local byte = string.byte
 		end
 
 		funcs.Fire = function(self, ...)
-			for i, v in next, self.Connections do
+			for i, v in ipairs( self.Connections) do
 				xpcall(coroutine.wrap(v.Func), function(e)
 					warn(e .. "\n" .. debug.traceback())
 				end, ...)
@@ -1122,22 +1125,22 @@ local byte = string.byte
 			end
 
 			if self:CanScrollUp() then
-				for i, v in pairs(button1.Arrow:GetChildren()) do
+				for i, v in ipairs( button1.Arrow:GetChildren()) do
 					v.BackgroundTransparency = 0
 				end
 			else
 				button1.BackgroundTransparency = 1
-				for i, v in pairs(button1.Arrow:GetChildren()) do
+				for i, v in ipairs( button1.Arrow:GetChildren()) do
 					v.BackgroundTransparency = 0.5
 				end
 			end
 			if self:CanScrollDown() then
-				for i, v in pairs(button2.Arrow:GetChildren()) do
+				for i, v in ipairs( button2.Arrow:GetChildren()) do
 					v.BackgroundTransparency = 0
 				end
 			else
 				button2.BackgroundTransparency = 1
-				for i, v in pairs(button2.Arrow:GetChildren()) do
+				for i, v in ipairs( button2.Arrow:GetChildren()) do
 					v.BackgroundTransparency = 0.5
 				end
 			end
@@ -1149,7 +1152,7 @@ local byte = string.byte
 			local markerFrame = self.GuiElems.MarkerFrame
 			markerFrame:ClearAllChildren()
 
-			for i, v in pairs(self.Markers) do
+			for i, v in ipairs(self.Markers) do
 				if i < self.TotalSpace then
 					createSimple("Frame", {
 						BackgroundTransparency = 0,
@@ -1204,10 +1207,10 @@ local byte = string.byte
 			self.Gui.BackgroundColor3 = data.FrameColor or Color3.new(0, 0, 0)
 			self.GuiElems.Button1.BackgroundColor3 = data.ButtonColor or Color3.new(0, 0, 0)
 			self.GuiElems.Button2.BackgroundColor3 = data.ButtonColor or Color3.new(0, 0, 0)
-			for i, v in pairs(self.GuiElems.Button1.Arrow:GetChildren()) do
+			for i, v in ipairs( self.GuiElems.Button1.Arrow:GetChildren()) do
 				v.BackgroundColor3 = data.ArrowColor or Color3.new(0, 0, 0)
 			end
-			for i, v in pairs(self.GuiElems.Button2.Arrow:GetChildren()) do
+			for i, v in ipairs(self.GuiElems.Button2.Arrow:GetChildren()) do
 				v.BackgroundColor3 = data.ArrowColor or Color3.new(0, 0, 0)
 			end
 		end
@@ -1375,7 +1378,7 @@ local byte = string.byte
 		local function sideHasRoom(side, neededSize)
 			local maxY = sidesGui.AbsoluteSize.Y - (math.max(0, #side.Windows - 1) * 4)
 			local inc = 0
-			for i, v in pairs(side.Windows) do
+			for i, v in ipairs( side.Windows) do
 				inc = inc + (v.MinY or 100)
 				if inc > maxY - neededSize then
 					return false
@@ -1389,7 +1392,7 @@ local byte = string.byte
 			local pos = #side.Windows + 1
 			local range = { 0, sidesGui.AbsoluteSize.Y }
 
-			for i, v in pairs(side.Windows) do
+			for i, v in ipairs(side.Windows) do
 				local midPos = v.PosY + v.SizeY / 2
 				if curY <= midPos then
 					pos = i
@@ -1749,7 +1752,7 @@ local byte = string.byte
 
 					guiDragging = true
 
-					releaseEvent =service.UserInputService.InputEnded:Connect(function(input)
+					releaseEvent = service.UserInputService.InputEnded:Connect(function(input)
 						if input.UserInputType == Enum.UserInputType.MouseButton1 then
 							releaseEvent:Disconnect()
 							mouseEvent:Disconnect()
@@ -1947,7 +1950,7 @@ local byte = string.byte
 		local function sideResized(side)
 			local currentPos = 0
 			local sideFramePos = getSideFramePos(side)
-			for i, v in pairs(side.Windows) do
+			for i, v in ipairs( side.Windows) do
 				v.SizeX = side.Width
 				v.GuiElems.Main.Size = UDim2.new(0, side.Width, 0, v.SizeY)
 				v.GuiElems.Main.Position = UDim2.new(sideFramePos.X.Scale, sideFramePos.X.Offset, 0, currentPos)
@@ -1956,7 +1959,7 @@ local byte = string.byte
 		end
 
 		local function sideResizerHook(resizer, dir, side, pos)
-			local mouse = Main.Mouse
+			local mouse = Main.Mouse or plr:GetMouse()
 			local windows = side.Windows
 
 			resizer.InputBegan:Connect(function(input)
@@ -2056,10 +2059,10 @@ local byte = string.byte
 			local currentPos = 0
 			local sideFramePos = getSideFramePos(side)
 			local template = side.WindowResizer:Clone()
-			for i, v in pairs(side.ResizeCons) do
+			for i, v in ipairs( side.ResizeCons) do
 				v:Disconnect()
 			end
-			for i, v in pairs(side.Frame:GetChildren()) do
+			for i, v in ipairs( side.Frame:GetChildren()) do
 				if v.Name == "WindowResizer" then
 					v:Destroy()
 				end
@@ -2067,7 +2070,7 @@ local byte = string.byte
 			side.ResizeCons = {}
 			side.Resizing = nil
 
-			for i, v in pairs(side.Windows) do
+			for i, v in next, side.Windows do
 				v.SidePos = i
 				local isEnd = i == #side.Windows
 				local size = UDim2.new(0, side.Width, 0, v.SizeY)
@@ -2124,10 +2127,10 @@ local byte = string.byte
 			local windows = side.Windows
 			local height = sidesGui.AbsoluteSize.Y - (math.max(0, #windows - 1) * 4)
 
-			for i, v in pairs(windows) do
+			for i, v in next, windows do
 				oldHeight = oldHeight + v.SizeY
 			end
-			for i, v in pairs(windows) do
+			for i, v in next, windows do
 				if i == #windows then
 					v.SizeY = height - currentPos
 					neededSize = math.max(0, (v.MinY or 100) - v.SizeY)
@@ -2265,13 +2268,13 @@ local byte = string.byte
 			self.GuiElems.Main.Active = not val
 			self.GuiElems.Main.Outlines.Visible = not val
 			if not val then
-				for i, v in pairs(leftSide.Windows) do
+				for i, v in next, leftSide.Windows do
 					if v == self then
 						table.remove(leftSide.Windows, i)
 						break
 					end
 				end
-				for i, v in pairs(rightSide.Windows) do
+				for i, v in next, rightSide.Windows do
 					if v == self then
 						table.remove(rightSide.Windows, i)
 						break
@@ -2285,7 +2288,7 @@ local byte = string.byte
 				updateWindows()
 			else
 				self:SetMinimized(false, 3)
-				for i, v in pairs(visibleWindows) do
+				for i, v in next, visibleWindows do
 					if v == self then
 						table.remove(visibleWindows, i)
 						break
@@ -2318,7 +2321,7 @@ local byte = string.byte
 			size = size or self.SizeY
 			if size > 0 and size <= 1 then
 				local totalSideHeight = 0
-				for i, v in pairs(side.Windows) do
+				for i, v in next, side.Windows do
 					totalSideHeight = totalSideHeight + v.SizeY
 				end
 				self.SizeY = (totalSideHeight > 0 and totalSideHeight * size * 2) or size
@@ -2330,7 +2333,7 @@ local byte = string.byte
 			self.Side = side
 			self.SizeX = side.Width
 			self.Gui.DisplayOrder = sideDisplayOrder + 1
-			for i, v in pairs(side.Windows) do
+			for i, v in next, side.Windows do
 				v.Gui.DisplayOrder = sideDisplayOrder
 			end
 			pos = math.min(#side.Windows + 1, pos or 1)
@@ -2415,7 +2418,7 @@ local byte = string.byte
 		end
 
 		funcs.StopTweens = function(self)
-			for i, v in pairs(self.Tweens) do
+			for i, v in next, self.Tweens do
 				v:Cancel()
 			end
 			self.Tweens = {}
@@ -2492,7 +2495,7 @@ local byte = string.byte
 		static.ToggleSide = function(name)
 			local side = (name == "left" and leftSide or rightSide)
 			side.Hidden = not side.Hidden
-			for i, v in pairs(side.Windows) do
+			for i, v in next, side.Windows do
 				if side.Hidden then
 					v.OnDeactivate:Fire()
 				else
@@ -2505,7 +2508,7 @@ local byte = string.byte
 		static.SetSideVisible = function(s, vis)
 			local side = (type(s) == "table" and s) or (s == "left" and leftSide or rightSide)
 			side.Hidden = not vis
-			for i, v in pairs(side.Windows) do
+			for i, v in next, side.Windows do
 				if side.Hidden then
 					v.OnDeactivate:Fire()
 				else
@@ -3116,7 +3119,7 @@ local byte = string.byte
 		end
 
 		funcs.Refresh = function(self)
-			for i, v in pairs(self.GuiElems.List:GetChildren()) do
+			for i, v in ipairs( self.GuiElems.List:GetChildren()) do
 				if not v:IsA("UIListLayout") then
 					v:Destroy()
 				end
@@ -3320,7 +3323,7 @@ local byte = string.byte
 		local mt = { __index = funcs }
 		local function new()
 			if not mouse then
-				mouse = Main.Mouse or service.Players.LocalPlayer:GetMouse()
+				mouse = Main.Mouse or plr:GetMouse()
 			end
 
 			local obj = setmetatable({
@@ -3507,7 +3510,7 @@ local byte = string.byte
 			local env = getfenv()
 			local type = type
 			local tostring = tostring
-			for name, _ in next, builtIns do
+			for name in next, builtIns do
 				local envVal = env[name]
 				if type(envVal) == "table" then
 					local items = {}
@@ -4031,7 +4034,7 @@ local byte = string.byte
 					.. (#middle > 0 and middle or " ")
 					.. (#right > 0 and right or " ")
 
-				for i, v in pairs(tabJumps) do
+				for i, v in next, tabJumps do
 					if selRange:find(i) then
 						return v
 					end
@@ -4674,7 +4677,7 @@ local byte = string.byte
 			local floor = math.floor
 			local templates = {}
 
-			for name, color in pairs(self.Colors) do
+			for name, color in next, self.Colors do
 				templates[name] = ('<font color="rgb(%s,%s,%s)">'):format(
 					floor(color.r * 255),
 					floor(color.g * 255),
@@ -5173,7 +5176,7 @@ local byte = string.byte
 	Lib.BrickColorPicker = (function()
 		local funcs = {}
 		local paletteCount = 0
-		local mouse = service.Players.LocalPlayer:GetMouse()
+		local mouse = Main.Mouse or plr:GetMouse()
 		local hexStartX = 4
 		local hexSizeX = 27
 		local hexTriangleStart = 1
@@ -6744,7 +6747,7 @@ local byte = string.byte
 			window.Alignable = false
 			window:SetTitle("Color Picker")
 			window:Resize(450, 330)
-			for i, v in pairs(guiContents:GetChildren()) do
+			for i, v in ipairs( guiContents:GetChildren()) do
 				v.Parent = window.GuiElems.Content
 			end
 			newMt.Window = window
@@ -6773,7 +6776,7 @@ local byte = string.byte
 			local blueInput = pickerFrame.Blue.Input
 
 			local user = service.UserInputService
-			local mouse = service.Players.LocalPlayer:GetMouse()
+			local mouse = Main.Mouse or plr:GetMouse()
 
 			local hue, sat, val = 0, 0, 1
 			local red, green, blue = 1, 1, 1
@@ -7123,7 +7126,7 @@ local byte = string.byte
 
 			local row = 0
 			local column = 0
-			for i, v in pairs(basicColors) do
+			for i, v in next, basicColors do
 				local newColor = colorChoice:Clone()
 				newColor.BackgroundColor3 = v
 				newColor.Position = UDim2.new(0, 1 + 30 * column, 0, 21 + 23 * row)
@@ -7466,7 +7469,7 @@ local byte = string.byte
 			window:SetTitle("NumberSequence Editor")
 			newMt.Window = window
 			newMt.Gui = window.Gui
-			for i, v in pairs(guiContents:GetChildren()) do
+			for i, v in ipairs( guiContents:GetChildren()) do
 				v.Parent = window.GuiElems.Content
 			end
 			local gui = window.Gui
@@ -7492,8 +7495,8 @@ local byte = string.byte
 			local currentPoint = nil
 			local resetSequence = nil
 
-			local user =service.UserInputService
-			local mouse = service.Players.LocalPlayer:GetMouse()
+			local user = service.UserInputService
+			local mouse = Main.Mouse or plr:GetMouse()
 
 			for i = 2, 10 do
 				local newLine = Instance.new("Frame")
@@ -7564,7 +7567,7 @@ local byte = string.byte
 
 			local function buildSequence()
 				local newPoints = {}
-				for i, v in pairs(points) do
+				for i, v in next, points do
 					table.insert(newPoints, NumberSequenceKeypoint.new(v[2], v[1], v[3]))
 				end
 				newMt.Sequence = NumberSequence.new(newPoints)
@@ -7705,7 +7708,7 @@ local byte = string.byte
 
 				newSelect.InputBegan:Connect(function(input)
 					if input.UserInputType == Enum.UserInputType.MouseMovement then
-						for i, v in pairs(points) do
+						for i, v in next, points do
 							v[4].Select.BackgroundTransparency = 1
 						end
 						newSelect.BackgroundTransparency = 0
@@ -7755,7 +7758,7 @@ local byte = string.byte
 								point[3] = math.min(oldEnvelope, maxEnvelope)
 								newMt:Redraw()
 								updateInputs(point)
-								for i, v in pairs(points) do
+								for i, v in next, points do
 									v[4].Select.BackgroundTransparency = 1
 								end
 								newSelect.BackgroundTransparency = 0
@@ -7769,7 +7772,7 @@ local byte = string.byte
 			end
 
 			local function placePoints()
-				for i, v in pairs(points) do
+				for i, v in next, points do
 					v[4] = placePoint(v)
 				end
 			end
@@ -7779,7 +7782,7 @@ local byte = string.byte
 				table.sort(points, function(a, b)
 					return a[2] < b[2]
 				end)
-				for i, v in pairs(points) do
+				for i, v in next, points do
 					v[4].Position = UDim2.new(
 						0,
 						math.floor((numberLineSize.X - 1) * v[2]) - 2,
@@ -7850,13 +7853,13 @@ local byte = string.byte
 
 			local function loadSequence(self, seq)
 				resetSequence = seq
-				for i, v in pairs(points) do
+				for i, v in next, points do
 					if v[4] then
 						v[4]:Destroy()
 					end
 				end
 				points = {}
-				for i, v in pairs(seq.Keypoints) do
+				for i, v in next, seq.Keypoints do
 					local maxEnvelope = math.min(v.Value, 10 - v.Value)
 					local newPoint = { v.Value, v.Time, math.min(v.Envelope, maxEnvelope) }
 					newPoint[4] = placePoint(newPoint)
@@ -7929,7 +7932,7 @@ local byte = string.byte
 					if Lib.CheckMouseInGui(envelopeDragTop) or Lib.CheckMouseInGui(envelopeDragBottom) then
 						return
 					end
-					for i, v in pairs(points) do
+					for i, v in next, points do
 						if Lib.CheckMouseInGui(v[4].Select) then
 							return
 						end
@@ -7962,7 +7965,7 @@ local byte = string.byte
 
 			deleteButton.MouseButton1Click:Connect(function()
 				if currentPoint and currentPoint ~= beginPoint and currentPoint ~= endPoint then
-					for i, v in pairs(points) do
+					for i, v in next, points do
 						if v == currentPoint then
 							v[4]:Destroy()
 							table.remove(points, i)
@@ -8279,7 +8282,7 @@ local byte = string.byte
 			window:SetTitle("ColorSequence Editor")
 			newMt.Window = window
 			newMt.Gui = window.Gui
-			for i, v in pairs(guiContents:GetChildren()) do
+			for i, v in ipairs( guiContents:GetChildren()) do
 				v.Parent = window.GuiElems.Content
 			end
 			local gui = window.Gui
@@ -8299,7 +8302,7 @@ local byte = string.byte
 			local topClose = pickerTopBar.Close
 
 			local user = service.UserInputService
-			local mouse =service.Players.LocalPlayer:GetMouse()
+			local mouse = Main.Mouse or plr:GetMouse()
 
 			local colors = {
 				{ Color3.new(1, 0, 1), 0 },
@@ -8325,7 +8328,7 @@ local byte = string.byte
 				table.sort(colors, function(a, b)
 					return a[2] < b[2]
 				end)
-				for i, v in pairs(colors) do
+				for i, v in next, colors do
 					table.insert(newPoints, ColorSequenceKeypoint.new(v[2], v[1]))
 				end
 				newMt.Sequence = ColorSequence.new(newPoints)
@@ -8410,7 +8413,7 @@ local byte = string.byte
 			end
 
 			local function placeArrows()
-				for i, v in pairs(colors) do
+				for i, v in next, colors do
 					v[3] = placeArrow(math.floor((colorLine.AbsoluteSize.X - 1) * v[2]) + 1, v)
 				end
 			end
@@ -8428,14 +8431,14 @@ local byte = string.byte
 
 			local function loadSequence(self, seq)
 				resetSequence = seq
-				for i, v in pairs(colors) do
+				for i, v in next, colors do
 					if v[3] then
 						v[3]:Destroy()
 					end
 				end
 				colors = {}
 				currentlySelected = nil
-				for i, v in pairs(seq.Keypoints) do
+				for i, v in next, seq.Keypoints do
 					local newPoint = { v.Value, v.Time }
 					newPoint[3] = placeArrow(v.Time, newPoint)
 					table.insert(colors, newPoint)
@@ -8476,7 +8479,7 @@ local byte = string.byte
 					local raw = relativeX / maxSize
 					local fromColor = nil
 					local toColor = nil
-					for i, col in pairs(colors) do
+					for i, col in next, colors do
 						if col[2] >= raw then
 							fromColor = colors[math.max(i - 1, 1)]
 							toColor = colors[i]
@@ -8511,7 +8514,7 @@ local byte = string.byte
 			colorLine.InputEnded:Connect(function(input)
 				if input.UserInputType == Enum.UserInputType.MouseMovement then
 					local inArrow = false
-					for i, v in pairs(colors) do
+					for i, v in next, colors do
 						if Lib.CheckMouseInGui(v[3]) then
 							inArrow = v[3]
 						end
@@ -8558,7 +8561,7 @@ local byte = string.byte
 
 			deleteButton.MouseButton1Click:Connect(function()
 				if currentPoint and currentPoint ~= beginPoint and currentPoint ~= endPoint then
-					for i, v in pairs(colors) do
+					for i, v in next, colors do
 						if v == currentPoint then
 							v[3]:Destroy()
 							table.remove(colors, i)
@@ -9079,7 +9082,7 @@ local byte = string.byte
 				return
 			end
 
-			for i, v in pairs(self.ItemCons[item]) do
+			for i, v in next, self.ItemCons[item] do
 				v:Disconnect()
 			end
 			self.ItemCons[item] = nil

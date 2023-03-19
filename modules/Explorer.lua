@@ -8,7 +8,7 @@
 local Main, Lib, Apps, Settings -- Main Containers
 local Properties, ScriptViewer -- Major Apps
 local API, RMD, Docs, env, service, plr, create -- Main Locals
-
+local pcall, next, ipairs = pcall, next, ipairs
 local function initDeps(data)
 	Main = data.Main
 	Lib = data.Lib
@@ -521,7 +521,7 @@ local function main()
 		local dragTree = treeFrame:Clone()
 		dragTree:ClearAllChildren()
 
-		for i, v in pairs(listEntries) do
+		for i, v in ipairs(listEntries) do
 			local node = tree[i + Explorer.Index]
 			if node and selection.Map[node] then
 				local clone = v:Clone()
@@ -600,7 +600,7 @@ local function main()
 		})
 		dragOutline.Parent = treeFrame
 
-		local mouse = Main.Mouse or service.Players.LocalPlayer:GetMouse()
+		local mouse = Main.Mouse or plr:GetMouse()
 		local function move()
 			local posX = mouse.X - offX
 			local posY = mouse.Y - offY
@@ -691,11 +691,11 @@ local function main()
 
 		newEntry.MouseButton1Up:Connect(function() end)
 
+		local mouse = Main.Mouse or plr:GetMouse()
 		newEntry.InputBegan:Connect(function(input)
 			if input.UserInputType == Enum.UserInputType.MouseButton1 then
 				local releaseEvent, mouseEvent
 
-				local mouse = Main.Mouse or plr:GetMouse()
 				local startX = mouse.X
 				local startY = mouse.Y
 
@@ -967,7 +967,7 @@ local function main()
 		Explorer.ForceUpdate(true)
 		local visibleSpace = scrollV.VisibleSpace
 
-		for i, v in next, tree do
+		for i, v in ipairs(tree) do
 			if v == node then
 				local relative = i - 1
 				if Explorer.Index > relative then
@@ -1295,7 +1295,7 @@ local function main()
 					node.Obj:Destroy()
 				end
 
-				for i, v in next, selection.List do
+				for i, v in ipairs(selection.List) do
 					if isa(v.Obj, "Model") then
 						ungroup(v)
 					end
@@ -1491,7 +1491,7 @@ local function main()
 			IconMap = Explorer.MiscIcons,
 			Icon = "InsertObject",
 			OnClick = function()
-				local mouse = Main.Mouse
+				local mouse = Main.Mouse or plr:GetMouse()
 				local x, y = Explorer.LastRightClickX or mouse.X, Explorer.LastRightClickY or mouse.Y
 				Explorer.InsertObjectContext:Show(x, y)
 			end,
@@ -1821,7 +1821,7 @@ local function main()
 				classQuery = lower(classQuery)
 
 				local className
-				for class in pairs(API.Classes) do
+				for class in next, API.Classes do
 					local cName = lower(class)
 					if cName == classQuery then
 						className = class
@@ -1858,9 +1858,9 @@ local function main()
 				end
 
 				if
-					not service.Players.LocalPlayer.Character
-					or not service.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-					or not service.Players.LocalPlayer.Character.HumanoidRootPart:IsA("BasePart")
+					not plr.Character
+					or not plr.Character:FindFirstChild("HumanoidRootPart")
+					or not plr.Character.HumanoidRootPart:IsA("BasePart")
 				then
 					return
 				end
@@ -1868,7 +1868,7 @@ local function main()
 				return {
 					Headers = {
 						"local isa = game.IsA",
-						"local hrp = service.Players.LocalPlayer.Character.HumanoidRootPart",
+						"local hrp = plr.Character.HumanoidRootPart",
 					},
 					Setups = { "local hrpPos = hrp.Position" },
 					ObjectDefs = { "local isBasePart = isa(obj,'BasePart')" },
@@ -2062,13 +2062,13 @@ local function main()
 		local finalHeaders = ""
 		local finalObjectDefs = ""
 
-		for setup, _ in next, setups do
+		for setup in next, setups do
 			finalSetups = finalSetups .. setup .. "\n"
 		end
-		for header, _ in next, headers do
+		for header in next, headers do
 			finalHeaders = finalHeaders .. header .. "\n"
 		end
-		for oDef, _ in next, objectDefs do
+		for oDef in next, objectDefs do
 			finalObjectDefs = finalObjectDefs .. oDef .. "\n"
 		end
 
@@ -2351,11 +2351,11 @@ return search]==]
 				sys.IsRenaming = selection.Map[node]
 
 				if Lib.IsShiftDown() then
-					if not selection.Piviot then
+					if not selection.Pivot then
 						return
 					end
 
-					local fromIndex = table.find(tree, selection.Piviot)
+					local fromIndex = table.find(tree, selection.Pivot)
 					local toIndex = table.find(tree, node)
 					if not fromIndex or not toIndex then
 						return
@@ -2387,12 +2387,12 @@ return search]==]
 					else
 						selection:Add(node)
 					end
-					selection.Piviot = node
+					selection.Pivot = node
 					sys.IsRenaming = false
 				elseif not selection.Map[node] then
 					selection.ShiftSet = {}
 					selection:Set(node)
-					selection.Piviot = node
+					selection.Pivot = node
 				end
 			elseif button == 2 then
 				if Properties.SelectObject(node.Obj) then
@@ -2402,7 +2402,7 @@ return search]==]
 				if not Lib.IsCtrlDown() and not selection.Map[node] then
 					selection.ShiftSet = {}
 					selection:Set(node)
-					selection.Piviot = node
+					selection.Pivot = node
 					Explorer.Refresh()
 				end
 			end
@@ -2424,7 +2424,7 @@ return search]==]
 				if selection.Map[node] and not Lib.IsShiftDown() and not Lib.IsCtrlDown() then
 					selection.ShiftSet = {}
 					selection:Set(node)
-					selection.Piviot = node
+					selection.Pivot = node
 					Explorer.Refresh()
 				end
 
@@ -2879,36 +2879,47 @@ return search]==]
 			end
 		end
 	end
-	local _holdingAlt = false
-	local _clickPartToSelect = false
 
-	service.UserInputService.InputBegan:Connect(function(input, gameProcessed)
-		print(input, input.KeyCode, input.UserInputType, _holdingAlt)
-		if gameProcessed then
+	local mouse = Main.Mouse or plr:GetMouse()
+	service.UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
+		if gameProcessedEvent then
 			return
 		end
-
-		if input.UserInputType == Enum.UserInputType.MouseButton1 and _clickPartToSelect then
-			local mouse = service.Players.LocalPlayer:GetMouse()
-			local targ = mouse.Target
-			print(targ)
-			if not targ then
+		print(Settings.Explorer.ClickSelect, input.UserInputType == Enum.UserInputType.MouseButton1)
+		if Settings.Explorer.ClickSelect and input.UserInputType == Enum.UserInputType.MouseButton1 then
+			local Target = mouse.Target
+			print("targ")
+			if not Target then
 				return
 			end
-
-			if not _holdingAlt then
-				local Model = targ:FindFirstAncestorOfClass("Model")
+			print(Target)
+			if not Lib.IsAltDown() then
+				local Model = Target:FindFirstAncestorOfClass("Model")
 				if Model then
-					targ = Model
+					Target = Model
 				end
 			end
-
-			local newSelection = {}
-			local node = nodes[targ]
-			if node then
-				newSelection[1] = node
+			local node = nodes[Target]
+			print(node)
+			if not node then
+				return
 			end
-			print(#newSelection, newSelection)
+			local newSelection = {}
+			local sList = selection.List
+			if not table.find(sList, node) then
+				table.insert(newSelection, node)
+			end
+			if Lib.IsCtrlDown() then
+				for _, v in next, sList do
+					print(_, v)
+				end
+				for i = 1, #sList do
+					local selectednode = sList[i]
+					if selectednode ~= node then
+						table.insert(newSelection, selectednode)
+					end
+				end
+			end
 
 			selection:SetTable(newSelection)
 			if #newSelection > 0 then
@@ -2916,22 +2927,9 @@ return search]==]
 			else
 				Explorer.Refresh()
 			end
-		end
-
-		if input.KeyCode == Enum.KeyCode.LeftAlt or input.KeyCode == Enum.KeyCode.RightAlt then
-			_holdingAlt = true
-		end
-
-		if input.UserInputType == Enum.UserInputType.MouseButton3 then
-			_clickPartToSelect = not _clickPartToSelect
-		end
-	end)
-	service.UserInputService.InputEnded:Connect(function(input, gameProcessed)
-		if gameProcessed then
-			return
-		end
-		if input.KeyCode == Enum.KeyCode.LeftAlt or input.KeyCode == Enum.KeyCode.RightAlt then
-			_holdingAlt = false
+		elseif input.UserInputType == Enum.UserInputType.MouseButton3 then
+			print("turned on")
+			Settings.Explorer.ClickSelect = not Settings.Explorer.ClickSelect
 		end
 	end)
 	return Explorer

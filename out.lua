@@ -10,7 +10,7 @@ local EmbeddedModules = {
 local Main, Lib, Apps, Settings -- Main Containers
 local Properties, ScriptViewer -- Major Apps
 local API, RMD, Docs, env, service, plr, create -- Main Locals
-
+local pcall, next, ipairs = pcall, next, ipairs
 local function initDeps(data)
 	Main = data.Main
 	Lib = data.Lib
@@ -523,7 +523,7 @@ local function main()
 		local dragTree = treeFrame:Clone()
 		dragTree:ClearAllChildren()
 
-		for i, v in pairs(listEntries) do
+		for i, v in ipairs(listEntries) do
 			local node = tree[i + Explorer.Index]
 			if node and selection.Map[node] then
 				local clone = v:Clone()
@@ -602,7 +602,7 @@ local function main()
 		})
 		dragOutline.Parent = treeFrame
 
-		local mouse = Main.Mouse or service.Players.LocalPlayer:GetMouse()
+		local mouse = Main.Mouse or plr:GetMouse()
 		local function move()
 			local posX = mouse.X - offX
 			local posY = mouse.Y - offY
@@ -693,11 +693,11 @@ local function main()
 
 		newEntry.MouseButton1Up:Connect(function() end)
 
+		local mouse = Main.Mouse or plr:GetMouse()
 		newEntry.InputBegan:Connect(function(input)
 			if input.UserInputType == Enum.UserInputType.MouseButton1 then
 				local releaseEvent, mouseEvent
 
-				local mouse = Main.Mouse or plr:GetMouse()
 				local startX = mouse.X
 				local startY = mouse.Y
 
@@ -969,7 +969,7 @@ local function main()
 		Explorer.ForceUpdate(true)
 		local visibleSpace = scrollV.VisibleSpace
 
-		for i, v in next, tree do
+		for i, v in ipairs(tree) do
 			if v == node then
 				local relative = i - 1
 				if Explorer.Index > relative then
@@ -1297,7 +1297,7 @@ local function main()
 					node.Obj:Destroy()
 				end
 
-				for i, v in next, selection.List do
+				for i, v in ipairs(selection.List) do
 					if isa(v.Obj, "Model") then
 						ungroup(v)
 					end
@@ -1493,7 +1493,7 @@ local function main()
 			IconMap = Explorer.MiscIcons,
 			Icon = "InsertObject",
 			OnClick = function()
-				local mouse = Main.Mouse
+				local mouse = Main.Mouse or plr:GetMouse()
 				local x, y = Explorer.LastRightClickX or mouse.X, Explorer.LastRightClickY or mouse.Y
 				Explorer.InsertObjectContext:Show(x, y)
 			end,
@@ -1823,7 +1823,7 @@ local function main()
 				classQuery = lower(classQuery)
 
 				local className
-				for class in pairs(API.Classes) do
+				for class in next, API.Classes do
 					local cName = lower(class)
 					if cName == classQuery then
 						className = class
@@ -1860,9 +1860,9 @@ local function main()
 				end
 
 				if
-					not service.Players.LocalPlayer.Character
-					or not service.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-					or not service.Players.LocalPlayer.Character.HumanoidRootPart:IsA("BasePart")
+					not plr.Character
+					or not plr.Character:FindFirstChild("HumanoidRootPart")
+					or not plr.Character.HumanoidRootPart:IsA("BasePart")
 				then
 					return
 				end
@@ -1870,7 +1870,7 @@ local function main()
 				return {
 					Headers = {
 						"local isa = game.IsA",
-						"local hrp = service.Players.LocalPlayer.Character.HumanoidRootPart",
+						"local hrp = plr.Character.HumanoidRootPart",
 					},
 					Setups = { "local hrpPos = hrp.Position" },
 					ObjectDefs = { "local isBasePart = isa(obj,'BasePart')" },
@@ -2064,13 +2064,13 @@ local function main()
 		local finalHeaders = ""
 		local finalObjectDefs = ""
 
-		for setup, _ in next, setups do
+		for setup in next, setups do
 			finalSetups = finalSetups .. setup .. "\n"
 		end
-		for header, _ in next, headers do
+		for header in next, headers do
 			finalHeaders = finalHeaders .. header .. "\n"
 		end
-		for oDef, _ in next, objectDefs do
+		for oDef in next, objectDefs do
 			finalObjectDefs = finalObjectDefs .. oDef .. "\n"
 		end
 
@@ -2353,11 +2353,11 @@ return search]==]
 				sys.IsRenaming = selection.Map[node]
 
 				if Lib.IsShiftDown() then
-					if not selection.Piviot then
+					if not selection.Pivot then
 						return
 					end
 
-					local fromIndex = table.find(tree, selection.Piviot)
+					local fromIndex = table.find(tree, selection.Pivot)
 					local toIndex = table.find(tree, node)
 					if not fromIndex or not toIndex then
 						return
@@ -2389,12 +2389,12 @@ return search]==]
 					else
 						selection:Add(node)
 					end
-					selection.Piviot = node
+					selection.Pivot = node
 					sys.IsRenaming = false
 				elseif not selection.Map[node] then
 					selection.ShiftSet = {}
 					selection:Set(node)
-					selection.Piviot = node
+					selection.Pivot = node
 				end
 			elseif button == 2 then
 				if Properties.SelectObject(node.Obj) then
@@ -2404,7 +2404,7 @@ return search]==]
 				if not Lib.IsCtrlDown() and not selection.Map[node] then
 					selection.ShiftSet = {}
 					selection:Set(node)
-					selection.Piviot = node
+					selection.Pivot = node
 					Explorer.Refresh()
 				end
 			end
@@ -2426,7 +2426,7 @@ return search]==]
 				if selection.Map[node] and not Lib.IsShiftDown() and not Lib.IsCtrlDown() then
 					selection.ShiftSet = {}
 					selection:Set(node)
-					selection.Piviot = node
+					selection.Pivot = node
 					Explorer.Refresh()
 				end
 
@@ -2881,33 +2881,45 @@ return search]==]
 			end
 		end
 	end
-	local _holdingAlt = false
-	local _clickPartToSelect = false
 
-	service.UserInputService.InputBegan:Connect(function(input, gameProcessed)
-		if gameProcessed then
+	local mouse = Main.Mouse or plr:GetMouse()
+	service.UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
+		if gameProcessedEvent then
 			return
 		end
-
-		if _clickPartToSelect and input.UserInputType == Enum.UserInputType.MouseButton1 then
-			local mouse = service.Players.LocalPlayer:GetMouse()
-			local targ = mouse.Target
-			if not targ then
+		print(Settings.Explorer.ClickSelect, input.UserInputType == Enum.UserInputType.MouseButton1)
+		if Settings.Explorer.ClickSelect and input.UserInputType == Enum.UserInputType.MouseButton1 then
+			local Target = mouse.Target
+			print("targ")
+			if not Target then
 				return
 			end
-
-			if not _holdingAlt then
-				local Model = targ:FindFirstAncestorOfClass("Model")
+			print(Target)
+			if not Lib.IsAltDown() then
+				local Model = Target:FindFirstAncestorOfClass("Model")
 				if Model then
-					targ = Model
+					Target = Model
+				end
+			end
+			local node = nodes[Target]
+			print(node)
+			if not node then
+				return
+			end
+			local newSelection = {}
+			table.insert(newSelection, node)
+			if Lib.IsCtrlDown() then
+				local sList = selection.List
+				for _, v in next, sList do
+					print(_, v)
+				end
+				for i = 1, #sList do
+					node = sList[i]
+
+					table.insert(newSelection, node)
 				end
 			end
 
-			local newSelection = {}
-			local node = nodes[targ]
-			if node then
-			table.insert(newSelection,  node)
-			end
 
 			selection:SetTable(newSelection)
 			if #newSelection > 0 then
@@ -2915,22 +2927,9 @@ return search]==]
 			else
 				Explorer.Refresh()
 			end
-		end
-
-		if input.KeyCode == Enum.KeyCode.LeftAlt or input.KeyCode == Enum.KeyCode.RightAlt then
-			_holdingAlt = true
-		end
-
-		if input.UserInputType == Enum.UserInputType.MouseButton3 then
-			_clickPartToSelect = not _clickPartToSelect
-		end
-	end)
-	service.UserInputService.InputEnded:Connect(function(input, gameProcessed)
-		if gameProcessed or not _holdingAlt then
-			return
-		end
-		if input.KeyCode == Enum.KeyCode.LeftAlt or input.KeyCode == Enum.KeyCode.RightAlt then
-			_holdingAlt = false
+		elseif input.UserInputType == Enum.UserInputType.MouseButton3 then
+			print("turned on")
+			Settings.Explorer.ClickSelect = not Settings.Explorer.ClickSelect
 		end
 	end)
 	return Explorer
@@ -2950,7 +2949,7 @@ end,
 local Main, Lib, Apps, Settings -- Main Containers
 local Explorer, Properties, ScriptViewer, Notebook -- Major Apps
 local API, RMD, env, service, plr, create, createSimple -- Main Locals
-
+local pcall, next, ipairs = pcall, next, ipairs
 local function initDeps(data)
 	Main = data.Main
 	Lib = data.Lib
@@ -2986,7 +2985,7 @@ local function main()
 		local type = type
 		local function copy(t)
 			local res = {}
-			for i, v in pairs(t) do
+			for i, v in next, t do
 				if v == SIGNAL then
 					res[i] = Lib.Signal.new()
 				elseif type(v) == "table" then
@@ -3043,7 +3042,7 @@ local function main()
 		if gui == nil then
 			return false
 		end
-		local mouse = Main.Mouse
+		local mouse = Main.Mouse or plr:GetMouse()
 		local guiPosition = gui.AbsolutePosition
 		local guiSize = gui.AbsoluteSize
 
@@ -3061,6 +3060,11 @@ local function main()
 	Lib.IsCtrlDown = function()
 		return service.UserInputService:IsKeyDown(Enum.KeyCode.LeftControl)
 			or service.UserInputService:IsKeyDown(Enum.KeyCode.RightControl)
+	end
+
+	Lib.IsAltDown = function()
+		return service.UserInputService:IsKeyDown(Enum.KeyCode.LeftAlt)
+			or service.UserInputService:IsKeyDown(Enum.KeyCode.RightAlt)
 	end
 
 	Lib.CreateArrow = function(size, num, dir)
@@ -3120,7 +3124,7 @@ local function main()
 			return arrowFrame
 		elseif dir == "right" then
 			for i = 1, num do
-				 createSimple("Frame", {
+				createSimple("Frame", {
 					BackgroundColor3 = Color3.new(220 / 255, 220 / 255, 220 / 255),
 					BorderSizePixel = 0,
 					Position = UDim2.new(
@@ -3143,14 +3147,14 @@ local function main()
 			-- Only exists to parse RMD
 			-- from https://github.com/jonathanpoelen/xmlparser
 
-			local string, print, pairs = string, print, pairs
+			local string, print, next = string, print, next
 
 			-- https://lua-users.org/wiki/StringTrim
 			-- local trim = function(s)
 			-- 	local from = s:match("^%s*()")
 			-- 	return from > #s and "" or s:match(".*%S", from)
 			-- end
-local byte = string.byte
+			local byte = string.byte
 			-- local gtchar = (">"):byte(1)
 			local slashchar = byte("/")
 			-- local D = string.byte("D", 1)
@@ -3188,9 +3192,7 @@ local byte = string.byte
 						local a = {}
 						if #closed == 0 then
 							local len = 0
-							for all, aname, _, value, starttxt in
-							txt:gmatch( "(.-([-_%w]+)%s*=%s*(.)(.-)%3%s*(/?>?))")
-							do
+							for all, aname, _, value, starttxt in txt:gmatch("(.-([-_%w]+)%s*=%s*(.)(.-)%3%s*(/?>?))") do
 								len = len + #all
 								a[aname] = value
 								if #starttxt ~= 0 then
@@ -3247,7 +3249,7 @@ local byte = string.byte
 
 			function createEntityTable(docEntities, resultEntities)
 				entities = resultEntities or defaultEntityTable()
-				for _, e in pairs(docEntities) do
+				for _, e in next, docEntities do
 					e.value = replaceEntities(e.value, entities)
 					entities[e.name] = e.value
 				end
@@ -3429,7 +3431,7 @@ local byte = string.byte
 
 	Lib.ColorToBytes = function(col)
 		local round = math.round
-		return ("%d, %d, %d"):format( round(col.r * 255), round(col.g * 255), round(col.b * 255))
+		return ("%d, %d, %d"):format(round(col.r * 255), round(col.g * 255), round(col.b * 255))
 	end
 
 	Lib.ReadFile = function(filename)
@@ -3496,7 +3498,7 @@ local byte = string.byte
 		end
 
 		funcs.Fire = function(self, ...)
-			for i, v in next, self.Connections do
+			for i, v in ipairs( self.Connections) do
 				xpcall(coroutine.wrap(v.Func), function(e)
 					warn(e .. "\n" .. debug.traceback())
 				end, ...)
@@ -4064,22 +4066,22 @@ local byte = string.byte
 			end
 
 			if self:CanScrollUp() then
-				for i, v in pairs(button1.Arrow:GetChildren()) do
+				for i, v in ipairs( button1.Arrow:GetChildren()) do
 					v.BackgroundTransparency = 0
 				end
 			else
 				button1.BackgroundTransparency = 1
-				for i, v in pairs(button1.Arrow:GetChildren()) do
+				for i, v in ipairs( button1.Arrow:GetChildren()) do
 					v.BackgroundTransparency = 0.5
 				end
 			end
 			if self:CanScrollDown() then
-				for i, v in pairs(button2.Arrow:GetChildren()) do
+				for i, v in ipairs( button2.Arrow:GetChildren()) do
 					v.BackgroundTransparency = 0
 				end
 			else
 				button2.BackgroundTransparency = 1
-				for i, v in pairs(button2.Arrow:GetChildren()) do
+				for i, v in ipairs( button2.Arrow:GetChildren()) do
 					v.BackgroundTransparency = 0.5
 				end
 			end
@@ -4091,7 +4093,7 @@ local byte = string.byte
 			local markerFrame = self.GuiElems.MarkerFrame
 			markerFrame:ClearAllChildren()
 
-			for i, v in pairs(self.Markers) do
+			for i, v in ipairs(self.Markers) do
 				if i < self.TotalSpace then
 					createSimple("Frame", {
 						BackgroundTransparency = 0,
@@ -4146,10 +4148,10 @@ local byte = string.byte
 			self.Gui.BackgroundColor3 = data.FrameColor or Color3.new(0, 0, 0)
 			self.GuiElems.Button1.BackgroundColor3 = data.ButtonColor or Color3.new(0, 0, 0)
 			self.GuiElems.Button2.BackgroundColor3 = data.ButtonColor or Color3.new(0, 0, 0)
-			for i, v in pairs(self.GuiElems.Button1.Arrow:GetChildren()) do
+			for i, v in ipairs( self.GuiElems.Button1.Arrow:GetChildren()) do
 				v.BackgroundColor3 = data.ArrowColor or Color3.new(0, 0, 0)
 			end
-			for i, v in pairs(self.GuiElems.Button2.Arrow:GetChildren()) do
+			for i, v in ipairs(self.GuiElems.Button2.Arrow:GetChildren()) do
 				v.BackgroundColor3 = data.ArrowColor or Color3.new(0, 0, 0)
 			end
 		end
@@ -4317,7 +4319,7 @@ local byte = string.byte
 		local function sideHasRoom(side, neededSize)
 			local maxY = sidesGui.AbsoluteSize.Y - (math.max(0, #side.Windows - 1) * 4)
 			local inc = 0
-			for i, v in pairs(side.Windows) do
+			for i, v in ipairs( side.Windows) do
 				inc = inc + (v.MinY or 100)
 				if inc > maxY - neededSize then
 					return false
@@ -4331,7 +4333,7 @@ local byte = string.byte
 			local pos = #side.Windows + 1
 			local range = { 0, sidesGui.AbsoluteSize.Y }
 
-			for i, v in pairs(side.Windows) do
+			for i, v in ipairs(side.Windows) do
 				local midPos = v.PosY + v.SizeY / 2
 				if curY <= midPos then
 					pos = i
@@ -4691,7 +4693,7 @@ local byte = string.byte
 
 					guiDragging = true
 
-					releaseEvent =service.UserInputService.InputEnded:Connect(function(input)
+					releaseEvent = service.UserInputService.InputEnded:Connect(function(input)
 						if input.UserInputType == Enum.UserInputType.MouseButton1 then
 							releaseEvent:Disconnect()
 							mouseEvent:Disconnect()
@@ -4889,7 +4891,7 @@ local byte = string.byte
 		local function sideResized(side)
 			local currentPos = 0
 			local sideFramePos = getSideFramePos(side)
-			for i, v in pairs(side.Windows) do
+			for i, v in ipairs( side.Windows) do
 				v.SizeX = side.Width
 				v.GuiElems.Main.Size = UDim2.new(0, side.Width, 0, v.SizeY)
 				v.GuiElems.Main.Position = UDim2.new(sideFramePos.X.Scale, sideFramePos.X.Offset, 0, currentPos)
@@ -4898,7 +4900,7 @@ local byte = string.byte
 		end
 
 		local function sideResizerHook(resizer, dir, side, pos)
-			local mouse = Main.Mouse
+			local mouse = Main.Mouse or plr:GetMouse()
 			local windows = side.Windows
 
 			resizer.InputBegan:Connect(function(input)
@@ -4998,10 +5000,10 @@ local byte = string.byte
 			local currentPos = 0
 			local sideFramePos = getSideFramePos(side)
 			local template = side.WindowResizer:Clone()
-			for i, v in pairs(side.ResizeCons) do
+			for i, v in ipairs( side.ResizeCons) do
 				v:Disconnect()
 			end
-			for i, v in pairs(side.Frame:GetChildren()) do
+			for i, v in ipairs( side.Frame:GetChildren()) do
 				if v.Name == "WindowResizer" then
 					v:Destroy()
 				end
@@ -5009,7 +5011,7 @@ local byte = string.byte
 			side.ResizeCons = {}
 			side.Resizing = nil
 
-			for i, v in pairs(side.Windows) do
+			for i, v in next, side.Windows do
 				v.SidePos = i
 				local isEnd = i == #side.Windows
 				local size = UDim2.new(0, side.Width, 0, v.SizeY)
@@ -5066,10 +5068,10 @@ local byte = string.byte
 			local windows = side.Windows
 			local height = sidesGui.AbsoluteSize.Y - (math.max(0, #windows - 1) * 4)
 
-			for i, v in pairs(windows) do
+			for i, v in next, windows do
 				oldHeight = oldHeight + v.SizeY
 			end
-			for i, v in pairs(windows) do
+			for i, v in next, windows do
 				if i == #windows then
 					v.SizeY = height - currentPos
 					neededSize = math.max(0, (v.MinY or 100) - v.SizeY)
@@ -5207,13 +5209,13 @@ local byte = string.byte
 			self.GuiElems.Main.Active = not val
 			self.GuiElems.Main.Outlines.Visible = not val
 			if not val then
-				for i, v in pairs(leftSide.Windows) do
+				for i, v in next, leftSide.Windows do
 					if v == self then
 						table.remove(leftSide.Windows, i)
 						break
 					end
 				end
-				for i, v in pairs(rightSide.Windows) do
+				for i, v in next, rightSide.Windows do
 					if v == self then
 						table.remove(rightSide.Windows, i)
 						break
@@ -5227,7 +5229,7 @@ local byte = string.byte
 				updateWindows()
 			else
 				self:SetMinimized(false, 3)
-				for i, v in pairs(visibleWindows) do
+				for i, v in next, visibleWindows do
 					if v == self then
 						table.remove(visibleWindows, i)
 						break
@@ -5260,7 +5262,7 @@ local byte = string.byte
 			size = size or self.SizeY
 			if size > 0 and size <= 1 then
 				local totalSideHeight = 0
-				for i, v in pairs(side.Windows) do
+				for i, v in next, side.Windows do
 					totalSideHeight = totalSideHeight + v.SizeY
 				end
 				self.SizeY = (totalSideHeight > 0 and totalSideHeight * size * 2) or size
@@ -5272,7 +5274,7 @@ local byte = string.byte
 			self.Side = side
 			self.SizeX = side.Width
 			self.Gui.DisplayOrder = sideDisplayOrder + 1
-			for i, v in pairs(side.Windows) do
+			for i, v in next, side.Windows do
 				v.Gui.DisplayOrder = sideDisplayOrder
 			end
 			pos = math.min(#side.Windows + 1, pos or 1)
@@ -5357,7 +5359,7 @@ local byte = string.byte
 		end
 
 		funcs.StopTweens = function(self)
-			for i, v in pairs(self.Tweens) do
+			for i, v in next, self.Tweens do
 				v:Cancel()
 			end
 			self.Tweens = {}
@@ -5434,7 +5436,7 @@ local byte = string.byte
 		static.ToggleSide = function(name)
 			local side = (name == "left" and leftSide or rightSide)
 			side.Hidden = not side.Hidden
-			for i, v in pairs(side.Windows) do
+			for i, v in next, side.Windows do
 				if side.Hidden then
 					v.OnDeactivate:Fire()
 				else
@@ -5447,7 +5449,7 @@ local byte = string.byte
 		static.SetSideVisible = function(s, vis)
 			local side = (type(s) == "table" and s) or (s == "left" and leftSide or rightSide)
 			side.Hidden = not vis
-			for i, v in pairs(side.Windows) do
+			for i, v in next, side.Windows do
 				if side.Hidden then
 					v.OnDeactivate:Fire()
 				else
@@ -6058,7 +6060,7 @@ local byte = string.byte
 		end
 
 		funcs.Refresh = function(self)
-			for i, v in pairs(self.GuiElems.List:GetChildren()) do
+			for i, v in ipairs( self.GuiElems.List:GetChildren()) do
 				if not v:IsA("UIListLayout") then
 					v:Destroy()
 				end
@@ -6262,7 +6264,7 @@ local byte = string.byte
 		local mt = { __index = funcs }
 		local function new()
 			if not mouse then
-				mouse = Main.Mouse or service.Players.LocalPlayer:GetMouse()
+				mouse = Main.Mouse or plr:GetMouse()
 			end
 
 			local obj = setmetatable({
@@ -6449,7 +6451,7 @@ local byte = string.byte
 			local env = getfenv()
 			local type = type
 			local tostring = tostring
-			for name, _ in next, builtIns do
+			for name in next, builtIns do
 				local envVal = env[name]
 				if type(envVal) == "table" then
 					local items = {}
@@ -6973,7 +6975,7 @@ local byte = string.byte
 					.. (#middle > 0 and middle or " ")
 					.. (#right > 0 and right or " ")
 
-				for i, v in pairs(tabJumps) do
+				for i, v in next, tabJumps do
 					if selRange:find(i) then
 						return v
 					end
@@ -7616,7 +7618,7 @@ local byte = string.byte
 			local floor = math.floor
 			local templates = {}
 
-			for name, color in pairs(self.Colors) do
+			for name, color in next, self.Colors do
 				templates[name] = ('<font color="rgb(%s,%s,%s)">'):format(
 					floor(color.r * 255),
 					floor(color.g * 255),
@@ -8115,7 +8117,7 @@ local byte = string.byte
 	Lib.BrickColorPicker = (function()
 		local funcs = {}
 		local paletteCount = 0
-		local mouse = service.Players.LocalPlayer:GetMouse()
+		local mouse = Main.Mouse or plr:GetMouse()
 		local hexStartX = 4
 		local hexSizeX = 27
 		local hexTriangleStart = 1
@@ -9686,7 +9688,7 @@ local byte = string.byte
 			window.Alignable = false
 			window:SetTitle("Color Picker")
 			window:Resize(450, 330)
-			for i, v in pairs(guiContents:GetChildren()) do
+			for i, v in ipairs( guiContents:GetChildren()) do
 				v.Parent = window.GuiElems.Content
 			end
 			newMt.Window = window
@@ -9715,7 +9717,7 @@ local byte = string.byte
 			local blueInput = pickerFrame.Blue.Input
 
 			local user = service.UserInputService
-			local mouse = service.Players.LocalPlayer:GetMouse()
+			local mouse = Main.Mouse or plr:GetMouse()
 
 			local hue, sat, val = 0, 0, 1
 			local red, green, blue = 1, 1, 1
@@ -10065,7 +10067,7 @@ local byte = string.byte
 
 			local row = 0
 			local column = 0
-			for i, v in pairs(basicColors) do
+			for i, v in next, basicColors do
 				local newColor = colorChoice:Clone()
 				newColor.BackgroundColor3 = v
 				newColor.Position = UDim2.new(0, 1 + 30 * column, 0, 21 + 23 * row)
@@ -10408,7 +10410,7 @@ local byte = string.byte
 			window:SetTitle("NumberSequence Editor")
 			newMt.Window = window
 			newMt.Gui = window.Gui
-			for i, v in pairs(guiContents:GetChildren()) do
+			for i, v in ipairs( guiContents:GetChildren()) do
 				v.Parent = window.GuiElems.Content
 			end
 			local gui = window.Gui
@@ -10434,8 +10436,8 @@ local byte = string.byte
 			local currentPoint = nil
 			local resetSequence = nil
 
-			local user =service.UserInputService
-			local mouse = service.Players.LocalPlayer:GetMouse()
+			local user = service.UserInputService
+			local mouse = Main.Mouse or plr:GetMouse()
 
 			for i = 2, 10 do
 				local newLine = Instance.new("Frame")
@@ -10506,7 +10508,7 @@ local byte = string.byte
 
 			local function buildSequence()
 				local newPoints = {}
-				for i, v in pairs(points) do
+				for i, v in next, points do
 					table.insert(newPoints, NumberSequenceKeypoint.new(v[2], v[1], v[3]))
 				end
 				newMt.Sequence = NumberSequence.new(newPoints)
@@ -10647,7 +10649,7 @@ local byte = string.byte
 
 				newSelect.InputBegan:Connect(function(input)
 					if input.UserInputType == Enum.UserInputType.MouseMovement then
-						for i, v in pairs(points) do
+						for i, v in next, points do
 							v[4].Select.BackgroundTransparency = 1
 						end
 						newSelect.BackgroundTransparency = 0
@@ -10697,7 +10699,7 @@ local byte = string.byte
 								point[3] = math.min(oldEnvelope, maxEnvelope)
 								newMt:Redraw()
 								updateInputs(point)
-								for i, v in pairs(points) do
+								for i, v in next, points do
 									v[4].Select.BackgroundTransparency = 1
 								end
 								newSelect.BackgroundTransparency = 0
@@ -10711,7 +10713,7 @@ local byte = string.byte
 			end
 
 			local function placePoints()
-				for i, v in pairs(points) do
+				for i, v in next, points do
 					v[4] = placePoint(v)
 				end
 			end
@@ -10721,7 +10723,7 @@ local byte = string.byte
 				table.sort(points, function(a, b)
 					return a[2] < b[2]
 				end)
-				for i, v in pairs(points) do
+				for i, v in next, points do
 					v[4].Position = UDim2.new(
 						0,
 						math.floor((numberLineSize.X - 1) * v[2]) - 2,
@@ -10792,13 +10794,13 @@ local byte = string.byte
 
 			local function loadSequence(self, seq)
 				resetSequence = seq
-				for i, v in pairs(points) do
+				for i, v in next, points do
 					if v[4] then
 						v[4]:Destroy()
 					end
 				end
 				points = {}
-				for i, v in pairs(seq.Keypoints) do
+				for i, v in next, seq.Keypoints do
 					local maxEnvelope = math.min(v.Value, 10 - v.Value)
 					local newPoint = { v.Value, v.Time, math.min(v.Envelope, maxEnvelope) }
 					newPoint[4] = placePoint(newPoint)
@@ -10871,7 +10873,7 @@ local byte = string.byte
 					if Lib.CheckMouseInGui(envelopeDragTop) or Lib.CheckMouseInGui(envelopeDragBottom) then
 						return
 					end
-					for i, v in pairs(points) do
+					for i, v in next, points do
 						if Lib.CheckMouseInGui(v[4].Select) then
 							return
 						end
@@ -10904,7 +10906,7 @@ local byte = string.byte
 
 			deleteButton.MouseButton1Click:Connect(function()
 				if currentPoint and currentPoint ~= beginPoint and currentPoint ~= endPoint then
-					for i, v in pairs(points) do
+					for i, v in next, points do
 						if v == currentPoint then
 							v[4]:Destroy()
 							table.remove(points, i)
@@ -11221,7 +11223,7 @@ local byte = string.byte
 			window:SetTitle("ColorSequence Editor")
 			newMt.Window = window
 			newMt.Gui = window.Gui
-			for i, v in pairs(guiContents:GetChildren()) do
+			for i, v in ipairs( guiContents:GetChildren()) do
 				v.Parent = window.GuiElems.Content
 			end
 			local gui = window.Gui
@@ -11241,7 +11243,7 @@ local byte = string.byte
 			local topClose = pickerTopBar.Close
 
 			local user = service.UserInputService
-			local mouse =service.Players.LocalPlayer:GetMouse()
+			local mouse = Main.Mouse or plr:GetMouse()
 
 			local colors = {
 				{ Color3.new(1, 0, 1), 0 },
@@ -11267,7 +11269,7 @@ local byte = string.byte
 				table.sort(colors, function(a, b)
 					return a[2] < b[2]
 				end)
-				for i, v in pairs(colors) do
+				for i, v in next, colors do
 					table.insert(newPoints, ColorSequenceKeypoint.new(v[2], v[1]))
 				end
 				newMt.Sequence = ColorSequence.new(newPoints)
@@ -11352,7 +11354,7 @@ local byte = string.byte
 			end
 
 			local function placeArrows()
-				for i, v in pairs(colors) do
+				for i, v in next, colors do
 					v[3] = placeArrow(math.floor((colorLine.AbsoluteSize.X - 1) * v[2]) + 1, v)
 				end
 			end
@@ -11370,14 +11372,14 @@ local byte = string.byte
 
 			local function loadSequence(self, seq)
 				resetSequence = seq
-				for i, v in pairs(colors) do
+				for i, v in next, colors do
 					if v[3] then
 						v[3]:Destroy()
 					end
 				end
 				colors = {}
 				currentlySelected = nil
-				for i, v in pairs(seq.Keypoints) do
+				for i, v in next, seq.Keypoints do
 					local newPoint = { v.Value, v.Time }
 					newPoint[3] = placeArrow(v.Time, newPoint)
 					table.insert(colors, newPoint)
@@ -11418,7 +11420,7 @@ local byte = string.byte
 					local raw = relativeX / maxSize
 					local fromColor = nil
 					local toColor = nil
-					for i, col in pairs(colors) do
+					for i, col in next, colors do
 						if col[2] >= raw then
 							fromColor = colors[math.max(i - 1, 1)]
 							toColor = colors[i]
@@ -11453,7 +11455,7 @@ local byte = string.byte
 			colorLine.InputEnded:Connect(function(input)
 				if input.UserInputType == Enum.UserInputType.MouseMovement then
 					local inArrow = false
-					for i, v in pairs(colors) do
+					for i, v in next, colors do
 						if Lib.CheckMouseInGui(v[3]) then
 							inArrow = v[3]
 						end
@@ -11500,7 +11502,7 @@ local byte = string.byte
 
 			deleteButton.MouseButton1Click:Connect(function()
 				if currentPoint and currentPoint ~= beginPoint and currentPoint ~= endPoint then
-					for i, v in pairs(colors) do
+					for i, v in next, colors do
 						if v == currentPoint then
 							v[3]:Destroy()
 							table.remove(colors, i)
@@ -12021,7 +12023,7 @@ local byte = string.byte
 				return
 			end
 
-			for i, v in pairs(self.ItemCons[item]) do
+			for i, v in next, self.ItemCons[item] do
 				v:Disconnect()
 			end
 			self.ItemCons[item] = nil
@@ -12056,7 +12058,7 @@ end,
 local Main, Lib, Apps, Settings -- Main Containers
 local Explorer, Properties, ScriptViewer, Notebook -- Major Apps
 local API, RMD, env, service, plr, create, createSimple -- Main Locals
-
+local pcall, next, ipairs = pcall, next, ipairs
 local function initDeps(data)
 	Main = data.Main
 	Lib = data.Lib
@@ -12578,7 +12580,7 @@ local function main()
 
 			if showingAttrs and attrCount < maxAttrs then
 				local attrs = getAttributes(obj)
-				for name, val in pairs(attrs) do
+				for name, val in next, attrs do
 					local typ = typeof(val)
 					if not foundAttrs[name] then
 						local category = (typ == "Instance" and "Class") or (typ == "EnumItem" and "Enum") or "Other"
@@ -12672,7 +12674,7 @@ local function main()
 
 	Properties.MakeSubProp = function(prop, subName, valueType, displayName)
 		local subProp = {}
-		for i, v in pairs(prop) do
+		for i, v in next, prop do
 			subProp[i] = v
 		end
 		subProp.RootType = subProp.RootType or subProp.ValueType
@@ -12911,7 +12913,7 @@ local function main()
 			end
 			if input.UserInputType == Enum.UserInputType.MouseMovement and not nameFrame.PropName.TextFits then
 				local fullNameFrame = Properties.FullNameFrame
-				local nameArr =(prop.Class .. "." .. prop.Name .. (prop.SubName or "")):split( ".")
+				local nameArr = (prop.Class .. "." .. prop.Name .. (prop.SubName or "")):split(".")
 				local dispName = prop.DisplayName or nameArr[#nameArr]
 				local sizeX =
 					service.TextService:GetTextSize(dispName, 14, Enum.Font.SourceSans, Vector2.new(math.huge, 20)).X
@@ -13352,7 +13354,7 @@ local function main()
 			editor.OnMoreColors:Connect(function() -- TODO: Special Case BasePart.BrickColor to BasePart.Color
 				editor:Close()
 				local colProp
-				for i, v in pairs(API.Classes.BasePart.Properties) do
+				for i, v in next, API.Classes.BasePart.Properties do
 					if v.Name == "Color" then
 						colProp = v
 						break
@@ -13511,7 +13513,7 @@ local function main()
 			propVal = obj[prop.Name]
 		end
 		if prop.SubName then
-			local indexes =prop.SubName:split( ".")
+			local indexes = prop.SubName:split(".")
 			for i = 1, #indexes do
 				local indexName = indexes[i]
 				if #indexName > 0 and propVal then
@@ -14008,7 +14010,7 @@ local function main()
 						elseif rootTypeName == "Faces" then
 							local faces = {}
 							local faceList = { "Back", "Bottom", "Front", "Left", "Right", "Top" }
-							for _, face in pairs(faceList) do
+							for _, face in next, faceList do
 								local val
 								if subName == "." .. face then
 									val = setVal
@@ -14023,7 +14025,7 @@ local function main()
 						elseif rootTypeName == "Axes" then
 							local axes = {}
 							local axesList = { "X", "Y", "Z" }
-							for _, axe in pairs(axesList) do
+							for _, axe in next, axesList do
 								local val
 								if subName == "." .. axe then
 									val = setVal
@@ -14710,7 +14712,7 @@ local function main()
 
 		-- Vars
 		categoryOrder = API.CategoryOrder
-		for category, _ in next, categoryOrder do
+		for category in next, categoryOrder do
 			if not Properties.CollapsedCategories[category] then
 				expanded["CAT_" .. category] = true
 			end
@@ -14794,7 +14796,7 @@ end,
 local Main, Lib, Apps, Settings -- Main Containers
 local Explorer, Properties, ScriptViewer, Notebook -- Major Apps
 local API, RMD, env, service, plr, create, createSimple -- Main Locals
-
+local pcall = pcall
 local function initDeps(data)
 	Main = data.Main
 	Lib = data.Lib
@@ -14922,7 +14924,7 @@ local finder, globalcontainer = loadstring(
 	"UniversalMethodFinder"
 )()
 
-print()
+-- print()
 if debug then
 	if debug.getupvalues then
 		globalcontainer.getupvalues = debug.getupvalues
@@ -14993,6 +14995,7 @@ DefaultSettings = (function()
 			Sorting = true,
 			TeleportToOffset = Vector3.new(0, 0, 0),
 			ClickToRename = true,
+			ClickSelect = true,
 			AutoUpdateSearch = true,
 			AutoUpdateMode = 0, -- 0 Default, 1 no tree update, 2 no descendant events, 3 frozen
 			PartSelectionBox = true,
@@ -15074,12 +15077,12 @@ local plr = service.Players.LocalPlayer or service.Players.PlayerAdded:Wait()
 
 local create = function(data)
 	local insts = {}
-	for i, v in pairs(data) do
+	for i, v in ipairs(data) do
 		insts[v[1]] = Instance.new(v[2])
 	end
 
-	for _, v in pairs(data) do
-		for prop, val in pairs(v[3]) do
+	for _, v in ipairs(data) do
+		for prop, val in next, v[3] do
 			if type(val) == "table" then
 				insts[v[1]][prop] = insts[val[1]]
 			else
@@ -15234,7 +15237,7 @@ Main = (function()
 	end
 
 	Main.LoadModules = function()
-		for i, v in pairs(Main.ModuleList) do
+		for i, v in ipairs(Main.ModuleList) do
 			local s, e = pcall(Main.LoadModule, v)
 			if not s then
 				Main.Error("FAILED LOADING " + v + " CAUSE " + e)
@@ -15254,7 +15257,7 @@ Main = (function()
 		}
 
 		Main.AppControls.Lib.InitAfterMain(appTable)
-		for i, v in pairs(Main.ModuleList) do
+		for i, v in ipairs(Main.ModuleList) do
 			local control = Main.AppControls[v]
 			if control then
 				control.InitAfterMain(appTable)
@@ -15357,13 +15360,14 @@ Main = (function()
 		second = true
 	end
 	]]
-
+	local pcall, next,ipairs = pcall, next, ipairs
 	Main.LoadSettings = function()
 		local s, data = pcall(env.readfile or error, "DexSettings.json")
 		if s and data and data ~= "" then
 			local s, decoded = service.HttpService:JSONDecode(data)
 			if s and decoded then
 				for i, v in next, decoded do
+					-- ? Read settings then write to the file
 				end
 			else
 				-- TODO: Notification
@@ -15375,7 +15379,7 @@ Main = (function()
 
 	Main.ResetSettings = function()
 		local function recur(t, res)
-			for set, val in pairs(t) do
+			for set, val in next, t do
 				if type(val) == "table" and val._Recurse then
 					if type(res[set]) ~= "table" then
 						res[set] = {}
@@ -15429,7 +15433,7 @@ Main = (function()
 			table.insert(t, pos, item)
 		end
 
-		for _, class in pairs(api.Classes) do
+		for _, class in ipairs(api.Classes) do
 			local newClass = {}
 			newClass.Name = class.Name
 			newClass.Superclass = class.Superclass
@@ -15440,18 +15444,18 @@ Main = (function()
 			newClass.Tags = {}
 
 			if class.Tags then
-				for c, tag in pairs(class.Tags) do
+				for c, tag in ipairs(class.Tags) do
 					newClass.Tags[tag] = true
 				end
 			end
-			for __, member in pairs(class.Members) do
+			for _, member in ipairs(class.Members) do
 				local newMember = {}
 				newMember.Name = member.Name
 				newMember.Class = class.Name
 				newMember.Security = member.Security
 				newMember.Tags = {}
 				if member.Tags then
-					for c, tag in pairs(member.Tags) do
+					for c, tag in ipairs(member.Tags) do
 						newMember.Tags[tag] = true
 					end
 				end
@@ -15471,13 +15475,13 @@ Main = (function()
 				elseif mType == "Function" then
 					newMember.Parameters = {}
 					newMember.ReturnType = member.ReturnType.Name
-					for c, param in pairs(member.Parameters) do
+					for c, param in ipairs(member.Parameters) do
 						table.insert(newMember.Parameters, { Name = param.Name, Type = param.Type.Name })
 					end
 					table.insert(newClass.Functions, newMember)
 				elseif mType == "Event" then
 					newMember.Parameters = {}
-					for c, param in pairs(member.Parameters) do
+					for c, param in ipairs(member.Parameters) do
 						table.insert(newMember.Parameters, { Name = param.Name, Type = param.Type.Name })
 					end
 					table.insert(newClass.Events, newMember)
@@ -15487,22 +15491,22 @@ Main = (function()
 			classes[class.Name] = newClass
 		end
 
-		for _, class in pairs(classes) do
+		for _, class in next, classes do
 			class.Superclass = classes[class.Superclass]
 		end
 
-		for _, enum in pairs(api.Enums) do
+		for _, enum in ipairs(api.Enums) do
 			local newEnum = {}
 			newEnum.Name = enum.Name
 			newEnum.Items = {}
 			newEnum.Tags = {}
 
 			if enum.Tags then
-				for c, tag in pairs(enum.Tags) do
+				for c, tag in ipairs(enum.Tags) do
 					newEnum.Tags[tag] = true
 				end
 			end
-			for __, item in pairs(enum.Items) do
+			for _, item in ipairs(enum.Items) do
 				local newItem = {}
 				newItem.Name = item.Name
 				newItem.Value = item.Value
@@ -15520,7 +15524,7 @@ Main = (function()
 
 			local currentClass = classes[class]
 			while currentClass do
-				for _, entry in pairs(currentClass[member]) do
+				for _, entry in next, currentClass[member] do
 					result[#result + 1] = entry
 				end
 				currentClass = currentClass.Superclass
@@ -15587,13 +15591,13 @@ Main = (function()
 		local propertyOrders = {}
 
 		local classes, enums = {}, {}
-		for _, class in pairs(classList) do
+		for _, class in next, classList do
 			local className = ""
-			for _, child in pairs(class.children) do
+			for _, child in next, class.children do
 				if child.tag == "Properties" then
 					local data = { Properties = {}, Functions = {} }
 					local props = child.children
-					for _, prop in pairs(props) do
+					for _, prop in next, props do
 						local name = prop.attrs.name
 						name = name:sub(1, 1):upper() .. name:sub(2)
 						data[name] = prop.children[1].text
@@ -15602,12 +15606,12 @@ Main = (function()
 					classes[className] = data
 				elseif child.attrs.class == "ReflectionMetadataProperties" then
 					local members = child.children
-					for _, member in pairs(members) do
+					for _, member in next, members do
 						if member.attrs.class == "ReflectionMetadataMember" then
 							local data = {}
 							if member.children[1].tag == "Properties" then
 								local props = member.children[1].children
-								for _, prop in pairs(props) do
+								for _, prop in next, props do
 									if prop.attrs then
 										local name = prop.attrs.name
 										name = name:sub(1, 1):upper() .. name:sub(2)
@@ -15628,12 +15632,12 @@ Main = (function()
 					end
 				elseif child.attrs.class == "ReflectionMetadataFunctions" then
 					local members = child.children
-					for _, member in pairs(members) do
+					for _, member in next, members do
 						if member.attrs.class == "ReflectionMetadataMember" then
 							local data = {}
 							if member.children[1].tag == "Properties" then
 								local props = member.children[1].children
-								for _, prop in pairs(props) do
+								for _, prop in next, props do
 									if prop.attrs then
 										local name = prop.attrs.name
 										name = name:sub(1, 1):upper() .. name:sub(2)
@@ -15648,13 +15652,13 @@ Main = (function()
 			end
 		end
 
-		for _, enum in pairs(enumList) do
+		for _, enum in next, enumList do
 			local enumName = ""
-			for _, child in pairs(enum.children) do
+			for _, child in next, enum.children do
 				if child.tag == "Properties" then
 					local data = { Items = {} }
 					local props = child.children
-					for _, prop in pairs(props) do
+					for _, prop in next, props do
 						local name = prop.attrs.name
 						name = name:sub(1, 1):upper() .. name:sub(2)
 						data[name] = prop.children[1].text
@@ -15665,7 +15669,7 @@ Main = (function()
 					local data = {}
 					if child.children[1].tag == "Properties" then
 						local props = child.children[1].children
-						for _, prop in pairs(props) do
+						for _, prop in next, props do
 							local name = prop.attrs.name
 							name = name:sub(1, 1):upper() .. name:sub(2)
 							data[name] = prop.children[1].text
@@ -15705,7 +15709,7 @@ Main = (function()
 		Main.RawDocs = rawDocs
 
 		local classes = {}
-		for i, v in pairs(service.HttpService:JSONDecode(rawDocs)) do
+		for i, v in next, service.HttpService:JSONDecode(rawDocs) do
 			local name = i:match("@roblox/globaltype/(%w+)$")
 			if name then
 				classes[name] = v
@@ -16649,7 +16653,7 @@ Main = (function()
 			local fileVer = Lib.ReadFile("dex/deps_version.dat")
 			Main.ClientVersion = Version()
 			if fileVer then
-				Main.DepsVersionData = fileVer:split( "\n")
+				Main.DepsVersionData = fileVer:split("\n")
 				if Main.LocalDepsUpToDate() then
 					Main.RobloxVersion = Main.DepsVersionData[2]
 				end
@@ -16712,4 +16716,6 @@ end)()
 -- Start
 Main.Init()
 
---for i,v in pairs(Main.MissingEnv) do print(i,v) end
+for i, v in ipairs(Main.MissingEnv) do
+	print(i, v)
+end

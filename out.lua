@@ -2885,29 +2885,29 @@ return search]==]
 	local _clickPartToSelect = false
 
 	service.UserInputService.InputBegan:Connect(function(input, gameProcessed)
-		print(input, input.KeyCode, input.UserInputType, _holdingAlt, gameProcessed)
 		if gameProcessed then
 			return
 		end
 
-		if input.UserInputType == Enum.UserInputType.MouseButton1 and _clickPartToSelect then
+		if _clickPartToSelect and input.UserInputType == Enum.UserInputType.MouseButton1 then
 			local mouse = service.Players.LocalPlayer:GetMouse()
 			local targ = mouse.Target
-			print(targ)
 			if not targ then
 				return
 			end
 
-			if targ:FindFirstAncestorOfClass("Model") and not _holdingAlt then
-				targ = targ:FindFirstAncestorOfClass("Model")
+			if not _holdingAlt then
+				local Model = targ:FindFirstAncestorOfClass("Model")
+				if Model then
+					targ = Model
+				end
 			end
 
 			local newSelection = {}
 			local node = nodes[targ]
 			if node then
-				newSelection[1] = node
+			table.insert(newSelection,  node)
 			end
-			print(#newSelection)
 
 			selection:SetTable(newSelection)
 			if #newSelection > 0 then
@@ -2926,8 +2926,7 @@ return search]==]
 		end
 	end)
 	service.UserInputService.InputEnded:Connect(function(input, gameProcessed)
-		print(input, input.KeyCode, gameProcessed)
-		if gameProcessed then
+		if gameProcessed or not _holdingAlt then
 			return
 		end
 		if input.KeyCode == Enum.KeyCode.LeftAlt or input.KeyCode == Enum.KeyCode.RightAlt then

@@ -2883,7 +2883,7 @@ return search]==]
 	local _clickPartToSelect = false
 
 	service.UserInputService.InputBegan:Connect(function(input, gameProcessed)
-		print(input, input.KeyCode, input.UserInputType, _holdingAlt, gameProcessed)
+		print(input, input.KeyCode, input.UserInputType, _holdingAlt)
 		if gameProcessed then
 			return
 		end
@@ -2896,8 +2896,11 @@ return search]==]
 				return
 			end
 
-			if targ:FindFirstAncestorOfClass("Model") and not _holdingAlt then
-				targ = targ:FindFirstAncestorOfClass("Model")
+			if not _holdingAlt then
+				local Model = targ:FindFirstAncestorOfClass("Model")
+				if Model then
+					targ = Model
+				end
 			end
 
 			local newSelection = {}
@@ -2905,7 +2908,7 @@ return search]==]
 			if node then
 				newSelection[1] = node
 			end
-			print(#newSelection)
+			print(#newSelection, newSelection)
 
 			selection:SetTable(newSelection)
 			if #newSelection > 0 then
@@ -2924,7 +2927,6 @@ return search]==]
 		end
 	end)
 	service.UserInputService.InputEnded:Connect(function(input, gameProcessed)
-		print(input, input.KeyCode, gameProcessed)
 		if gameProcessed then
 			return
 		end

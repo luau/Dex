@@ -2888,11 +2888,11 @@ return search]==]
 
 		if Settings.Explorer.ClickSelect and input.UserInputType == Enum.UserInputType.MouseButton1 then
 			local Target = mouse.Target
-			
+
 			if not Target then
 				return
 			end
-			
+
 			if not Lib.IsAltDown() then
 				local Model = Target:FindFirstAncestorOfClass("Model")
 				if Model then
@@ -2900,7 +2900,7 @@ return search]==]
 				end
 			end
 			local node = nodes[Target]
-			
+
 			if not node then
 				return
 			end

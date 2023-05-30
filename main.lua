@@ -12,6 +12,7 @@
 	If you want more info, you can join the server: https://discord.io/zinnia
 	Note that very limited to no support will be provided.
 ]]
+local pcall, next, ipairs = pcall, next, ipairs
 local finder, globalcontainer = loadstring(
 	game:HttpGet("https://raw.githubusercontent.com/lua-u/SomeHub/main/UniversalMethodFinder.luau", true),
 	"UniversalMethodFinder"
@@ -35,7 +36,7 @@ globalcontainer.hash = loadstring(
 finder({
 	appendfile = '(...):find("file",nil,true) and (...):find("append",nil,true)',
 	checkcaller = '(...):find("check",nil,true) and (...):find("caller",nil,true)',
-	decompile = '(...):find("decomp",nil,true)',
+	decompile = '(...):find("decomp",nil,true) or (...):find("assembl",nil,true)',
 	getconstants = '(...):find("get",nil,true) and ((...):find("consts",nil,true) or (...):find("constants",nil,true))',
 	getgc = '(...):find("get",nil,true) and (...):find("gc",nil,true)',
 	gethui = '(...):find("get",nil,true) and ((...):find("hui",nil,true) or (...):find("hid",nil,true) and (...):find("gui",nil,true))',
@@ -55,7 +56,7 @@ finder({
 	rconsoleprint = '(...):find("console",nil,true) and (...):find("print",nil,true) and (...):find("r",nil,true)==1',
 	readfile = '(...):find("file",nil,true) and (...):find("read",nil,true)',
 	saveinstance = '(...):find("save",nil,true)',
-	setclipboard = '(...):find("clipboard",nil,true) or (...):find("copy",nil,true) and (...):find("string",nil,true)',
+	setclipboard = '(...):find("clip",nil,true) or (...):find("board",nil,true) or (...):find("copy",nil,true) and (...):find("string",nil,true)',
 	setfflag = '(...):find("set",nil,true) and (...):find("fflag",nil,true)',
 	writefile = '(...):find("file",nil,true) and (...):find("write",nil,true)',
 }, true)
@@ -452,23 +453,22 @@ Main = (function()
 		second = true
 	end
 	]]
-	local pcall, next, ipairs = pcall, next, ipairs
-	Main.LoadSettings = function()
-		local s, data = pcall(env.readfile or error, "DexSettings.json")
-		if s and data and data ~= "" then
-			local s, decoded = service.HttpService:JSONDecode(data)
-			if s and decoded then
-				for i, v in next, decoded do
-					-- ? Read settings then write to the file
-				end
-			else
-				-- TODO: Notification
-			end
-		else
-			Main.ResetSettings()
-		end
-	end
 
+	-- Main.SaveSettings = function()
+	-- 	local function Color3_To_JSON(tab)
+	-- 		for key, val in next, tab do
+	-- 			if type(val) == "table" then
+	-- 				Color3_To_JSON(val)
+	-- 			elseif typeof(val) == "Color3" then
+	-- 				tab[key] = { val.R, val.G, val.B }
+	-- 			end
+	-- 		end
+	-- 	end
+	-- 	pcall(env.writefile or error, "DexSettings.json", service.HttpService:JSONEncode(Settings))
+	-- end
+	-- pcall(function()
+	-- 	game.OnClose = Main.SaveSettings
+	-- end)
 	Main.ResetSettings = function()
 		local function recur(t, res)
 			for set, val in next, t do
@@ -484,7 +484,36 @@ Main = (function()
 			return res
 		end
 		recur(DefaultSettings, Settings)
+		-- Main.SaveSettings()
 	end
+
+	-- Main.LoadSettings = function()
+	-- 	local s, data = pcall(env.readfile or error, "DexSettings.json")
+	-- 	if s and data and data ~= "" then
+	-- 		local decoded
+	-- 		s, decoded = service.HttpService:JSONDecode(data)
+	-- 		if s and decoded then
+	-- 			local function recur(t, res)
+	-- 				for set, val in next, t do
+	-- 					if type(val) == "table" and val._Recurse then
+	-- 						if type(res[set]) ~= "table" then
+	-- 							res[set] = {}
+	-- 						end
+	-- 						recur(val, res[set])
+	-- 					else
+	-- 						res[set] = val
+	-- 					end
+	-- 				end
+	-- 				return res
+	-- 			end
+	-- 			recur(decoded, Settings)
+	-- 		else
+	-- 			-- TODO: Notification
+	-- 		end
+	-- 	else
+	-- 		Main.ResetSettings()
+	-- 	end
+	-- end
 
 	Main.FetchAPI = function()
 		local api, rawAPI

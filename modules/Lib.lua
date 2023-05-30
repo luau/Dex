@@ -557,7 +557,7 @@ local function main()
 		end
 
 		funcs.Fire = function(self, ...)
-			for i, v in ipairs( self.Connections) do
+			for i, v in ipairs(self.Connections) do
 				xpcall(coroutine.wrap(v.Func), function(e)
 					warn(e .. "\n" .. debug.traceback())
 				end, ...)
@@ -1125,22 +1125,22 @@ local function main()
 			end
 
 			if self:CanScrollUp() then
-				for i, v in ipairs( button1.Arrow:GetChildren()) do
+				for i, v in ipairs(button1.Arrow:GetChildren()) do
 					v.BackgroundTransparency = 0
 				end
 			else
 				button1.BackgroundTransparency = 1
-				for i, v in ipairs( button1.Arrow:GetChildren()) do
+				for i, v in ipairs(button1.Arrow:GetChildren()) do
 					v.BackgroundTransparency = 0.5
 				end
 			end
 			if self:CanScrollDown() then
-				for i, v in ipairs( button2.Arrow:GetChildren()) do
+				for i, v in ipairs(button2.Arrow:GetChildren()) do
 					v.BackgroundTransparency = 0
 				end
 			else
 				button2.BackgroundTransparency = 1
-				for i, v in ipairs( button2.Arrow:GetChildren()) do
+				for i, v in ipairs(button2.Arrow:GetChildren()) do
 					v.BackgroundTransparency = 0.5
 				end
 			end
@@ -1207,7 +1207,7 @@ local function main()
 			self.Gui.BackgroundColor3 = data.FrameColor or Color3.new(0, 0, 0)
 			self.GuiElems.Button1.BackgroundColor3 = data.ButtonColor or Color3.new(0, 0, 0)
 			self.GuiElems.Button2.BackgroundColor3 = data.ButtonColor or Color3.new(0, 0, 0)
-			for i, v in ipairs( self.GuiElems.Button1.Arrow:GetChildren()) do
+			for i, v in ipairs(self.GuiElems.Button1.Arrow:GetChildren()) do
 				v.BackgroundColor3 = data.ArrowColor or Color3.new(0, 0, 0)
 			end
 			for i, v in ipairs(self.GuiElems.Button2.Arrow:GetChildren()) do
@@ -1378,7 +1378,7 @@ local function main()
 		local function sideHasRoom(side, neededSize)
 			local maxY = sidesGui.AbsoluteSize.Y - (math.max(0, #side.Windows - 1) * 4)
 			local inc = 0
-			for i, v in ipairs( side.Windows) do
+			for i, v in ipairs(side.Windows) do
 				inc = inc + (v.MinY or 100)
 				if inc > maxY - neededSize then
 					return false
@@ -1950,7 +1950,7 @@ local function main()
 		local function sideResized(side)
 			local currentPos = 0
 			local sideFramePos = getSideFramePos(side)
-			for i, v in ipairs( side.Windows) do
+			for i, v in ipairs(side.Windows) do
 				v.SizeX = side.Width
 				v.GuiElems.Main.Size = UDim2.new(0, side.Width, 0, v.SizeY)
 				v.GuiElems.Main.Position = UDim2.new(sideFramePos.X.Scale, sideFramePos.X.Offset, 0, currentPos)
@@ -2059,10 +2059,10 @@ local function main()
 			local currentPos = 0
 			local sideFramePos = getSideFramePos(side)
 			local template = side.WindowResizer:Clone()
-			for i, v in ipairs( side.ResizeCons) do
+			for _, v in ipairs(side.ResizeCons) do
 				v:Disconnect()
 			end
-			for i, v in ipairs( side.Frame:GetChildren()) do
+			for _, v in ipairs(side.Frame:GetChildren()) do
 				if v.Name == "WindowResizer" then
 					v:Destroy()
 				end
@@ -2070,7 +2070,7 @@ local function main()
 			side.ResizeCons = {}
 			side.Resizing = nil
 
-			for i, v in next, side.Windows do
+			for i, v in ipairs(side.Windows) do
 				v.SidePos = i
 				local isEnd = i == #side.Windows
 				local size = UDim2.new(0, side.Width, 0, v.SizeY)
@@ -2321,7 +2321,7 @@ local function main()
 			size = size or self.SizeY
 			if size > 0 and size <= 1 then
 				local totalSideHeight = 0
-				for i, v in next, side.Windows do
+				for _, v in ipairs(side.Windows) do
 					totalSideHeight = totalSideHeight + v.SizeY
 				end
 				self.SizeY = (totalSideHeight > 0 and totalSideHeight * size * 2) or size
@@ -2333,7 +2333,7 @@ local function main()
 			self.Side = side
 			self.SizeX = side.Width
 			self.Gui.DisplayOrder = sideDisplayOrder + 1
-			for i, v in next, side.Windows do
+			for _, v in ipairs(side.Windows) do
 				v.Gui.DisplayOrder = sideDisplayOrder
 			end
 			pos = math.min(#side.Windows + 1, pos or 1)
@@ -2495,7 +2495,7 @@ local function main()
 		static.ToggleSide = function(name)
 			local side = (name == "left" and leftSide or rightSide)
 			side.Hidden = not side.Hidden
-			for i, v in next, side.Windows do
+			for _, v in ipairs(side.Windows) do
 				if side.Hidden then
 					v.OnDeactivate:Fire()
 				else
@@ -2508,7 +2508,7 @@ local function main()
 		static.SetSideVisible = function(s, vis)
 			local side = (type(s) == "table" and s) or (s == "left" and leftSide or rightSide)
 			side.Hidden = not vis
-			for i, v in next, side.Windows do
+			for _, v in ipairs(side.Windows) do
 				if side.Hidden then
 					v.OnDeactivate:Fire()
 				else
@@ -2774,7 +2774,7 @@ local function main()
 
 		local function createGui(self)
 			local contextGui = create({
-				{ 1, "ScreenGui", { DisplayOrder = 1000000, Name = "Context", ZIndexBehavior = 1 } },
+				{ 1, "ScreenGui", { DisplayOrder = math.huge, Name = "Context", ZIndexBehavior = 1 } },
 				{
 					2,
 					"Frame",
@@ -3119,7 +3119,7 @@ local function main()
 		end
 
 		funcs.Refresh = function(self)
-			for i, v in ipairs( self.GuiElems.List:GetChildren()) do
+			for i, v in ipairs(self.GuiElems.List:GetChildren()) do
 				if not v:IsA("UIListLayout") then
 					v:Destroy()
 				end
@@ -6747,7 +6747,7 @@ local function main()
 			window.Alignable = false
 			window:SetTitle("Color Picker")
 			window:Resize(450, 330)
-			for i, v in ipairs( guiContents:GetChildren()) do
+			for i, v in ipairs(guiContents:GetChildren()) do
 				v.Parent = window.GuiElems.Content
 			end
 			newMt.Window = window
@@ -7469,7 +7469,7 @@ local function main()
 			window:SetTitle("NumberSequence Editor")
 			newMt.Window = window
 			newMt.Gui = window.Gui
-			for i, v in ipairs( guiContents:GetChildren()) do
+			for i, v in ipairs(guiContents:GetChildren()) do
 				v.Parent = window.GuiElems.Content
 			end
 			local gui = window.Gui
@@ -8282,7 +8282,7 @@ local function main()
 			window:SetTitle("ColorSequence Editor")
 			newMt.Window = window
 			newMt.Gui = window.Gui
-			for i, v in ipairs( guiContents:GetChildren()) do
+			for i, v in ipairs(guiContents:GetChildren()) do
 				v.Parent = window.GuiElems.Content
 			end
 			local gui = window.Gui

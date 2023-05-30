@@ -2890,11 +2890,11 @@ return search]==]
 
 		if Settings.Explorer.ClickSelect and input.UserInputType == Enum.UserInputType.MouseButton1 then
 			local Target = mouse.Target
-			
+
 			if not Target then
 				return
 			end
-			
+
 			if not Lib.IsAltDown() then
 				local Model = Target:FindFirstAncestorOfClass("Model")
 				if Model then
@@ -2902,7 +2902,7 @@ return search]==]
 				end
 			end
 			local node = nodes[Target]
-			
+
 			if not node then
 				return
 			end
@@ -3496,7 +3496,7 @@ local function main()
 		end
 
 		funcs.Fire = function(self, ...)
-			for i, v in ipairs( self.Connections) do
+			for i, v in ipairs(self.Connections) do
 				xpcall(coroutine.wrap(v.Func), function(e)
 					warn(e .. "\n" .. debug.traceback())
 				end, ...)
@@ -4064,22 +4064,22 @@ local function main()
 			end
 
 			if self:CanScrollUp() then
-				for i, v in ipairs( button1.Arrow:GetChildren()) do
+				for i, v in ipairs(button1.Arrow:GetChildren()) do
 					v.BackgroundTransparency = 0
 				end
 			else
 				button1.BackgroundTransparency = 1
-				for i, v in ipairs( button1.Arrow:GetChildren()) do
+				for i, v in ipairs(button1.Arrow:GetChildren()) do
 					v.BackgroundTransparency = 0.5
 				end
 			end
 			if self:CanScrollDown() then
-				for i, v in ipairs( button2.Arrow:GetChildren()) do
+				for i, v in ipairs(button2.Arrow:GetChildren()) do
 					v.BackgroundTransparency = 0
 				end
 			else
 				button2.BackgroundTransparency = 1
-				for i, v in ipairs( button2.Arrow:GetChildren()) do
+				for i, v in ipairs(button2.Arrow:GetChildren()) do
 					v.BackgroundTransparency = 0.5
 				end
 			end
@@ -4146,7 +4146,7 @@ local function main()
 			self.Gui.BackgroundColor3 = data.FrameColor or Color3.new(0, 0, 0)
 			self.GuiElems.Button1.BackgroundColor3 = data.ButtonColor or Color3.new(0, 0, 0)
 			self.GuiElems.Button2.BackgroundColor3 = data.ButtonColor or Color3.new(0, 0, 0)
-			for i, v in ipairs( self.GuiElems.Button1.Arrow:GetChildren()) do
+			for i, v in ipairs(self.GuiElems.Button1.Arrow:GetChildren()) do
 				v.BackgroundColor3 = data.ArrowColor or Color3.new(0, 0, 0)
 			end
 			for i, v in ipairs(self.GuiElems.Button2.Arrow:GetChildren()) do
@@ -4317,7 +4317,7 @@ local function main()
 		local function sideHasRoom(side, neededSize)
 			local maxY = sidesGui.AbsoluteSize.Y - (math.max(0, #side.Windows - 1) * 4)
 			local inc = 0
-			for i, v in ipairs( side.Windows) do
+			for i, v in ipairs(side.Windows) do
 				inc = inc + (v.MinY or 100)
 				if inc > maxY - neededSize then
 					return false
@@ -4889,7 +4889,7 @@ local function main()
 		local function sideResized(side)
 			local currentPos = 0
 			local sideFramePos = getSideFramePos(side)
-			for i, v in ipairs( side.Windows) do
+			for i, v in ipairs(side.Windows) do
 				v.SizeX = side.Width
 				v.GuiElems.Main.Size = UDim2.new(0, side.Width, 0, v.SizeY)
 				v.GuiElems.Main.Position = UDim2.new(sideFramePos.X.Scale, sideFramePos.X.Offset, 0, currentPos)
@@ -4998,10 +4998,10 @@ local function main()
 			local currentPos = 0
 			local sideFramePos = getSideFramePos(side)
 			local template = side.WindowResizer:Clone()
-			for i, v in ipairs( side.ResizeCons) do
+			for _, v in ipairs(side.ResizeCons) do
 				v:Disconnect()
 			end
-			for i, v in ipairs( side.Frame:GetChildren()) do
+			for _, v in ipairs(side.Frame:GetChildren()) do
 				if v.Name == "WindowResizer" then
 					v:Destroy()
 				end
@@ -5009,7 +5009,7 @@ local function main()
 			side.ResizeCons = {}
 			side.Resizing = nil
 
-			for i, v in next, side.Windows do
+			for i, v in ipairs(side.Windows) do
 				v.SidePos = i
 				local isEnd = i == #side.Windows
 				local size = UDim2.new(0, side.Width, 0, v.SizeY)
@@ -5260,7 +5260,7 @@ local function main()
 			size = size or self.SizeY
 			if size > 0 and size <= 1 then
 				local totalSideHeight = 0
-				for i, v in next, side.Windows do
+				for _, v in ipairs(side.Windows) do
 					totalSideHeight = totalSideHeight + v.SizeY
 				end
 				self.SizeY = (totalSideHeight > 0 and totalSideHeight * size * 2) or size
@@ -5272,7 +5272,7 @@ local function main()
 			self.Side = side
 			self.SizeX = side.Width
 			self.Gui.DisplayOrder = sideDisplayOrder + 1
-			for i, v in next, side.Windows do
+			for _, v in ipairs(side.Windows) do
 				v.Gui.DisplayOrder = sideDisplayOrder
 			end
 			pos = math.min(#side.Windows + 1, pos or 1)
@@ -5434,7 +5434,7 @@ local function main()
 		static.ToggleSide = function(name)
 			local side = (name == "left" and leftSide or rightSide)
 			side.Hidden = not side.Hidden
-			for i, v in next, side.Windows do
+			for _, v in ipairs(side.Windows) do
 				if side.Hidden then
 					v.OnDeactivate:Fire()
 				else
@@ -5447,7 +5447,7 @@ local function main()
 		static.SetSideVisible = function(s, vis)
 			local side = (type(s) == "table" and s) or (s == "left" and leftSide or rightSide)
 			side.Hidden = not vis
-			for i, v in next, side.Windows do
+			for _, v in ipairs(side.Windows) do
 				if side.Hidden then
 					v.OnDeactivate:Fire()
 				else
@@ -5713,7 +5713,7 @@ local function main()
 
 		local function createGui(self)
 			local contextGui = create({
-				{ 1, "ScreenGui", { DisplayOrder = 1000000, Name = "Context", ZIndexBehavior = 1 } },
+				{ 1, "ScreenGui", { DisplayOrder = math.huge, Name = "Context", ZIndexBehavior = 1 } },
 				{
 					2,
 					"Frame",
@@ -6058,7 +6058,7 @@ local function main()
 		end
 
 		funcs.Refresh = function(self)
-			for i, v in ipairs( self.GuiElems.List:GetChildren()) do
+			for i, v in ipairs(self.GuiElems.List:GetChildren()) do
 				if not v:IsA("UIListLayout") then
 					v:Destroy()
 				end
@@ -9686,7 +9686,7 @@ local function main()
 			window.Alignable = false
 			window:SetTitle("Color Picker")
 			window:Resize(450, 330)
-			for i, v in ipairs( guiContents:GetChildren()) do
+			for i, v in ipairs(guiContents:GetChildren()) do
 				v.Parent = window.GuiElems.Content
 			end
 			newMt.Window = window
@@ -10408,7 +10408,7 @@ local function main()
 			window:SetTitle("NumberSequence Editor")
 			newMt.Window = window
 			newMt.Gui = window.Gui
-			for i, v in ipairs( guiContents:GetChildren()) do
+			for i, v in ipairs(guiContents:GetChildren()) do
 				v.Parent = window.GuiElems.Content
 			end
 			local gui = window.Gui
@@ -11221,7 +11221,7 @@ local function main()
 			window:SetTitle("ColorSequence Editor")
 			newMt.Window = window
 			newMt.Gui = window.Gui
-			for i, v in ipairs( guiContents:GetChildren()) do
+			for i, v in ipairs(guiContents:GetChildren()) do
 				v.Parent = window.GuiElems.Content
 			end
 			local gui = window.Gui
@@ -14917,6 +14917,7 @@ end,
 	If you want more info, you can join the server: https://discord.io/zinnia
 	Note that very limited to no support will be provided.
 ]]
+local pcall, next, ipairs = pcall, next, ipairs
 local finder, globalcontainer = loadstring(
 	game:HttpGet("https://raw.githubusercontent.com/lua-u/SomeHub/main/UniversalMethodFinder.luau", true),
 	"UniversalMethodFinder"
@@ -14940,7 +14941,7 @@ globalcontainer.hash = loadstring(
 finder({
 	appendfile = '(...):find("file",nil,true) and (...):find("append",nil,true)',
 	checkcaller = '(...):find("check",nil,true) and (...):find("caller",nil,true)',
-	decompile = '(...):find("decomp",nil,true)',
+	decompile = '(...):find("decomp",nil,true) or (...):find("assembl",nil,true)',
 	getconstants = '(...):find("get",nil,true) and ((...):find("consts",nil,true) or (...):find("constants",nil,true))',
 	getgc = '(...):find("get",nil,true) and (...):find("gc",nil,true)',
 	gethui = '(...):find("get",nil,true) and ((...):find("hui",nil,true) or (...):find("hid",nil,true) and (...):find("gui",nil,true))',
@@ -14960,7 +14961,7 @@ finder({
 	rconsoleprint = '(...):find("console",nil,true) and (...):find("print",nil,true) and (...):find("r",nil,true)==1',
 	readfile = '(...):find("file",nil,true) and (...):find("read",nil,true)',
 	saveinstance = '(...):find("save",nil,true)',
-	setclipboard = '(...):find("clipboard",nil,true) or (...):find("copy",nil,true) and (...):find("string",nil,true)',
+	setclipboard = '(...):find("clip",nil,true) or (...):find("board",nil,true) or (...):find("copy",nil,true) and (...):find("string",nil,true)',
 	setfflag = '(...):find("set",nil,true) and (...):find("fflag",nil,true)',
 	writefile = '(...):find("file",nil,true) and (...):find("write",nil,true)',
 }, true)
@@ -15357,23 +15358,22 @@ Main = (function()
 		second = true
 	end
 	]]
-	local pcall, next, ipairs = pcall, next, ipairs
-	Main.LoadSettings = function()
-		local s, data = pcall(env.readfile or error, "DexSettings.json")
-		if s and data and data ~= "" then
-			local s, decoded = service.HttpService:JSONDecode(data)
-			if s and decoded then
-				for i, v in next, decoded do
-					-- ? Read settings then write to the file
-				end
-			else
-				-- TODO: Notification
-			end
-		else
-			Main.ResetSettings()
-		end
-	end
 
+	-- Main.SaveSettings = function()
+	-- 	local function Color3_To_JSON(tab)
+	-- 		for key, val in next, tab do
+	-- 			if type(val) == "table" then
+	-- 				Color3_To_JSON(val)
+	-- 			elseif typeof(val) == "Color3" then
+	-- 				tab[key] = { val.R, val.G, val.B }
+	-- 			end
+	-- 		end
+	-- 	end
+	-- 	pcall(env.writefile or error, "DexSettings.json", service.HttpService:JSONEncode(Settings))
+	-- end
+	-- pcall(function()
+	-- 	game.OnClose = Main.SaveSettings
+	-- end)
 	Main.ResetSettings = function()
 		local function recur(t, res)
 			for set, val in next, t do
@@ -15389,7 +15389,36 @@ Main = (function()
 			return res
 		end
 		recur(DefaultSettings, Settings)
+		-- Main.SaveSettings()
 	end
+
+	-- Main.LoadSettings = function()
+	-- 	local s, data = pcall(env.readfile or error, "DexSettings.json")
+	-- 	if s and data and data ~= "" then
+	-- 		local decoded
+	-- 		s, decoded = service.HttpService:JSONDecode(data)
+	-- 		if s and decoded then
+	-- 			local function recur(t, res)
+	-- 				for set, val in next, t do
+	-- 					if type(val) == "table" and val._Recurse then
+	-- 						if type(res[set]) ~= "table" then
+	-- 							res[set] = {}
+	-- 						end
+	-- 						recur(val, res[set])
+	-- 					else
+	-- 						res[set] = val
+	-- 					end
+	-- 				end
+	-- 				return res
+	-- 			end
+	-- 			recur(decoded, Settings)
+	-- 		else
+	-- 			-- TODO: Notification
+	-- 		end
+	-- 	else
+	-- 		Main.ResetSettings()
+	-- 	end
+	-- end
 
 	Main.FetchAPI = function()
 		local api, rawAPI

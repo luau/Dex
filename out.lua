@@ -15747,7 +15747,7 @@ Main = (function()
 
 	Main.ShowGui = function(gui)
 		if env.protectgui then
-			env.protectgui(gui)
+			env.protectgui(gui) -- Some fluxus shit env.protectgui(gui.ClassName,gui)
 		end
 		gui.Parent = Main.GuiHolder
 	end

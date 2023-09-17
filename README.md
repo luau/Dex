@@ -76,7 +76,7 @@ List of stuff that I planned do before I realized that I shouldn't be working on
 
 ## Missing stuff from old Dex
 Features that existed in old Dex that I didn't get to make. These should be the first things you add if you plan to continue / edit this.
-- Click to select
+- ~~Click to select~~
 - Saving (instance specific in right click menu, and a menu for whole map saving)
 - Settings menu
 - Tabs in script viewer

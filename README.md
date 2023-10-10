@@ -53,6 +53,7 @@ List of stuff that I planned do before I realized that I shouldn't be working on
 	* more filters for search
 	* bookmarking / starring insts
 	* a lot of the things in right click that i planned but didn't finish
+	* update icons (including classes) to latest images, plus perhaps use GetClassIcon
 - Properties
 	* Copy value on clipboard (what is displayed in the box, or formatted to be pasted into lua)
 	* Select object properties in explorer

@@ -36,7 +36,7 @@ globalcontainer.hash = loadstring(
 finder({
 	appendfile = '(...):find("file",nil,true) and (...):find("append",nil,true)',
 	checkcaller = '(...):find("check",nil,true) and (...):find("caller",nil,true)',
-	decompile = '(...):find("decomp",nil,true) or (...):find("assembl",nil,true)',
+	decompile = '((...):find("decomp",nil,true) and (...):sub(#...) ~= "s") or (...):find("assembl",nil,true)',
 	getconstants = '(...):find("get",nil,true) and ((...):find("consts",nil,true) or (...):find("constants",nil,true))',
 	getgc = '(...):find("get",nil,true) and (...):find("gc",nil,true)',
 	gethui = '(...):find("get",nil,true) and ((...):find("hui",nil,true) or (...):find("hid",nil,true) and (...):find("gui",nil,true))',

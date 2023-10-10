@@ -14941,7 +14941,7 @@ globalcontainer.hash = loadstring(
 finder({
 	appendfile = '(...):find("file",nil,true) and (...):find("append",nil,true)',
 	checkcaller = '(...):find("check",nil,true) and (...):find("caller",nil,true)',
-	decompile = '(...):find("decomp",nil,true) or (...):find("assembl",nil,true)',
+	decompile = '((...):find("decomp",nil,true) and (...):sub(#...) ~= "s") or (...):find("assembl",nil,true)',
 	getconstants = '(...):find("get",nil,true) and ((...):find("consts",nil,true) or (...):find("constants",nil,true))',
 	getgc = '(...):find("get",nil,true) and (...):find("gc",nil,true)',
 	gethui = '(...):find("get",nil,true) and ((...):find("hui",nil,true) or (...):find("hid",nil,true) and (...):find("gui",nil,true))',
@@ -15392,33 +15392,33 @@ Main = (function()
 		-- Main.SaveSettings()
 	end
 
-	Main.LoadSettings = function()
-		local s, data = pcall(env.readfile or error, "DexSettings.json")
-		if s and data and data ~= "" then
-			local decoded
-			s, decoded = service.HttpService:JSONDecode(data)
-			if s and decoded then
-				-- local function recur(t, res)
-				-- 	for set, val in next, t do
-				-- 		if type(val) == "table" and val._Recurse then
-				-- 			if type(res[set]) ~= "table" then
-				-- 				res[set] = {}
-				-- 			end
-				-- 			recur(val, res[set])
-				-- 		else
-				-- 			res[set] = val
-				-- 		end
-				-- 	end
-				-- 	return res
-				-- end
-				-- recur(decoded, Settings)
-			else
-				-- TODO: Notification
-			end
-		else
-			Main.ResetSettings()
-		end
-	end
+	-- Main.LoadSettings = function()
+	-- 	local s, data = pcall(env.readfile or error, "DexSettings.json")
+	-- 	if s and data and data ~= "" then
+	-- 		local decoded
+	-- 		s, decoded = service.HttpService:JSONDecode(data)
+	-- 		if s and decoded then
+	-- 			local function recur(t, res)
+	-- 				for set, val in next, t do
+	-- 					if type(val) == "table" and val._Recurse then
+	-- 						if type(res[set]) ~= "table" then
+	-- 							res[set] = {}
+	-- 						end
+	-- 						recur(val, res[set])
+	-- 					else
+	-- 						res[set] = val
+	-- 					end
+	-- 				end
+	-- 				return res
+	-- 			end
+	-- 			recur(decoded, Settings)
+	-- 		else
+	-- 			-- TODO: Notification
+	-- 		end
+	-- 	else
+	-- 		Main.ResetSettings()
+	-- 	end
+	-- end
 
 	Main.FetchAPI = function()
 		local api, rawAPI
@@ -15747,7 +15747,7 @@ Main = (function()
 
 	Main.ShowGui = function(gui)
 		if env.protectgui then
-			env.protectgui(gui) -- Some fluxus sh*t env.protectgui(gui.ClassName,gui)
+			env.protectgui(gui)
 		end
 		gui.Parent = Main.GuiHolder
 	end

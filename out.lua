@@ -15392,33 +15392,33 @@ Main = (function()
 		-- Main.SaveSettings()
 	end
 
-	-- Main.LoadSettings = function()
-	-- 	local s, data = pcall(env.readfile or error, "DexSettings.json")
-	-- 	if s and data and data ~= "" then
-	-- 		local decoded
-	-- 		s, decoded = service.HttpService:JSONDecode(data)
-	-- 		if s and decoded then
-	-- 			local function recur(t, res)
-	-- 				for set, val in next, t do
-	-- 					if type(val) == "table" and val._Recurse then
-	-- 						if type(res[set]) ~= "table" then
-	-- 							res[set] = {}
-	-- 						end
-	-- 						recur(val, res[set])
-	-- 					else
-	-- 						res[set] = val
-	-- 					end
-	-- 				end
-	-- 				return res
-	-- 			end
-	-- 			recur(decoded, Settings)
-	-- 		else
-	-- 			-- TODO: Notification
-	-- 		end
-	-- 	else
-	-- 		Main.ResetSettings()
-	-- 	end
-	-- end
+	Main.LoadSettings = function()
+		local s, data = pcall(env.readfile or error, "DexSettings.json")
+		if s and data and data ~= "" then
+			local decoded
+			s, decoded = service.HttpService:JSONDecode(data)
+			if s and decoded then
+				-- local function recur(t, res)
+				-- 	for set, val in next, t do
+				-- 		if type(val) == "table" and val._Recurse then
+				-- 			if type(res[set]) ~= "table" then
+				-- 				res[set] = {}
+				-- 			end
+				-- 			recur(val, res[set])
+				-- 		else
+				-- 			res[set] = val
+				-- 		end
+				-- 	end
+				-- 	return res
+				-- end
+				-- recur(decoded, Settings)
+			else
+				-- TODO: Notification
+			end
+		else
+			Main.ResetSettings()
+		end
+	end
 
 	Main.FetchAPI = function()
 		local api, rawAPI
@@ -16612,7 +16612,7 @@ Main = (function()
 			local a = service.CoreGui:GetFullName()
 		end)
 		Main.InitEnv()
-		-- Main.LoadSettings()
+		Main.LoadSettings()
 		Main.SetupFilesystem()
 
 		-- Load Lib

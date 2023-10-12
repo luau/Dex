@@ -16612,7 +16612,7 @@ Main = (function()
 			local a = service.CoreGui:GetFullName()
 		end)
 		Main.InitEnv()
-		Main.LoadSettings()
+		-- Main.LoadSettings()
 		Main.SetupFilesystem()
 
 		-- Load Lib

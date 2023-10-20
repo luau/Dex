@@ -14918,7 +14918,7 @@ local service = setmetatable({}, {
 
 local pcall, next, ipairs = pcall, next, ipairs
 
-local env = getfenv() or _G or shared
+local env =  _G or shared
 
 local req_load = require(script.Parent.loadstring) -- ! YOU'LL NEED A CUSTOM LOADSTRING MODULE
 env.loadstring = function(String)

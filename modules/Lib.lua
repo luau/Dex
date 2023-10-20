@@ -218,7 +218,20 @@ local function main()
 			local slashchar = byte("/")
 			-- local D = string.byte("D", 1)
 			local E = byte("E")
-
+			local function replaceEntities(s, entities)
+				return s:gsub("&([^;]+);", entities)
+			end
+			local function defaultEntityTable()
+				return { quot = '"', apos = "'", lt = "<", gt = ">", amp = "&", tab = "\t", nbsp = " " }
+			end
+			local function createEntityTable(docEntities, resultEntities)
+				local entities = resultEntities or defaultEntityTable()
+				for _, e in next, docEntities do
+					e.value = replaceEntities(e.value, entities)
+					entities[e.name] = e.value
+				end
+				return entities
+			end
 			local function parse(s, evalEntities)
 				-- remove comments
 				s = s:gsub("<!%-%-(.-)%-%->", "")
@@ -294,25 +307,8 @@ local function main()
 				return { children = t, entities = entities, tentities = tentities }
 			end
 
-			function parseText(txt)
+			local function parseText(txt)
 				return parse(txt)
-			end
-
-			function defaultEntityTable()
-				return { quot = '"', apos = "'", lt = "<", gt = ">", amp = "&", tab = "\t", nbsp = " " }
-			end
-
-			function replaceEntities(s, entities)
-				return s:gsub("&([^;]+);", entities)
-			end
-
-			function createEntityTable(docEntities, resultEntities)
-				entities = resultEntities or defaultEntityTable()
-				for _, e in next, docEntities do
-					e.value = replaceEntities(e.value, entities)
-					entities[e.name] = e.value
-				end
-				return entities
 			end
 
 			return parseText
@@ -522,7 +518,7 @@ local function main()
 			return
 		end
 
-		local s, data = pcall(game.HttpGet, game, url)
+		local s, data = pcall(env.HttpGet.InvokeServer, env.HttpGet, url)
 		if not s then
 			return
 		end
@@ -4220,70 +4216,68 @@ local function main()
 
 			for i = 1, #found do
 				local pos = found[i]
-				if pos <= lastEnding then
-					continue
-				end
-
-				local ending = pos
-				local typ = foundMap[pos]
-				if typ == 1 then
-					ending = find(text, '"', pos + 1, true)
-					while ending and sub(text, ending - 1, ending - 1) == "\\" do
-						ending = find(text, '"', ending + 1, true)
-					end
-					if not ending then
-						ending = textLen
-					end
-				elseif typ == 2 then
-					ending = find(text, "'", pos + 1, true)
-					while ending and sub(text, ending - 1, ending - 1) == "\\" do
-						ending = find(text, "'", ending + 1, true)
-					end
-					if not ending then
-						ending = textLen
-					end
-				elseif typ == 3 then
-					_, ending = find(text, "]" .. extras[pos] .. "]", pos + 1, true)
-					if not ending then
-						ending = textLen
-					end
-				elseif typ == 4 then
-					local ahead = foundMap[pos + 2]
-
-					if ahead == 3 then
-						_, ending = find(text, "]" .. extras[pos + 2] .. "]", pos + 1, true)
+				if lastEnding < pos then
+					local ending = pos
+					local typ = foundMap[pos]
+					if typ == 1 then
+						ending = find(text, '"', pos + 1, true)
+						while ending and sub(text, ending - 1, ending - 1) == "\\" do
+							ending = find(text, '"', ending + 1, true)
+						end
 						if not ending then
 							ending = textLen
 						end
-					else
-						ending = find(text, "\n", pos + 1, true) or textLen
-					end
-				end
+					elseif typ == 2 then
+						ending = find(text, "'", pos + 1, true)
+						while ending and sub(text, ending - 1, ending - 1) == "\\" do
+							ending = find(text, "'", ending + 1, true)
+						end
+						if not ending then
+							ending = textLen
+						end
+					elseif typ == 3 then
+						_, ending = find(text, "]" .. extras[pos] .. "]", pos + 1, true)
+						if not ending then
+							ending = textLen
+						end
+					elseif typ == 4 then
+						local ahead = foundMap[pos + 2]
 
-				while pos > lineEnd do
-					curLine = curLine + 1
-					--lineTableCount = 1
-					lineEnd = newLines[curLine] or textLen + 1
-				end
-				while true do
-					local lineTable = foundHighlights[curLine]
-					if not lineTable then
-						lineTable = {}
-						foundHighlights[curLine] = lineTable
+						if ahead == 3 then
+							_, ending = find(text, "]" .. extras[pos + 2] .. "]", pos + 1, true)
+							if not ending then
+								ending = textLen
+							end
+						else
+							ending = find(text, "\n", pos + 1, true) or textLen
+						end
 					end
-					lineTable[pos] = { typ, ending }
-					--lineTableCount = lineTableCount + 1
 
-					if ending > lineEnd then
+					while pos > lineEnd do
 						curLine = curLine + 1
+						--lineTableCount = 1
 						lineEnd = newLines[curLine] or textLen + 1
-					else
-						break
 					end
-				end
+					while true do
+						local lineTable = foundHighlights[curLine]
+						if not lineTable then
+							lineTable = {}
+							foundHighlights[curLine] = lineTable
+						end
+						lineTable[pos] = { typ, ending }
+						--lineTableCount = lineTableCount + 1
 
-				lastEnding = ending
-				--if i < 200 then print(curLine) end
+						if ending > lineEnd then
+							curLine = curLine + 1
+							lineEnd = newLines[curLine] or textLen + 1
+						else
+							break
+						end
+					end
+
+					lastEnding = ending
+					--if i < 200 then print(curLine) end
+				end
 			end
 			self.PreHighlights = foundHighlights
 			--print(tick()-start)
@@ -4302,7 +4296,6 @@ local function main()
 			local highlights = {}
 			local preHighlights = self.PreHighlights[line] or {}
 			local lineText = self.Lines[line] or ""
-			local lineLen = #lineText
 			local lastEnding = 0
 			local currentType = 0
 			local lastWord = nil
@@ -4323,107 +4316,111 @@ local function main()
 			end
 
 			for col = 1, #lineText do
-				if col <= lastEnding then
-					highlights[col] = currentType
-					continue
-				end
-
-				local pre = preHighlightMap[col]
-				if pre then
-					currentType = pre[1]
-					lastEnding = pre[2]
-					highlights[col] = currentType
-					wordBeginsDotted = false
-					lastWord = nil
-					funcStatus = 0
-				else
-					local char = sub(lineText, col, col)
-					if find(char, "[%a_]") then
-						local word = match(lineText, "[%a%d_]+", col)
-						local wordType = (keywords[word] and 7) or (builtIns[word] and 8)
-
-						lastEnding = col + #word - 1
-
-						if wordType ~= 7 then
-							if wordBeginsDotted then
-								local prevBuiltIn = lastWord and builtIns[lastWord]
-								wordType = (prevBuiltIn and type(prevBuiltIn) == "table" and prevBuiltIn[word] and 8)
-									or 10
-							end
-
-							if wordType ~= 8 then
-								local x, y, br = find(lineText, "^%s*([%({\"'])", lastEnding + 1)
-								if x then
-									wordType = (funcStatus > 0 and br == "(" and 16) or 9
-									funcStatus = 0
-								end
-							end
-						else
-							wordType = specialKeywordsTypes[word] or wordType
-							funcStatus = (word == "function" and 1 or 0)
-						end
-
-						lastWord = word
-						wordBeginsDotted = false
-						if funcStatus > 0 then
-							funcStatus = 1
-						end
-
-						if wordType then
-							currentType = wordType
-							highlights[col] = currentType
-						else
-							currentType = nil
-						end
-					elseif find(char, "%p") then
-						local isDot = (char == ".")
-						local isNum = isDot and find(sub(lineText, col + 1, col + 1), "%d")
-						highlights[col] = (isNum and 6 or 5)
-
-						if not isNum then
-							local dotStr = isDot and match(lineText, "%.%.?%.?", col)
-							if dotStr and #dotStr > 1 then
-								currentType = 5
-								lastEnding = col + #dotStr - 1
-								wordBeginsDotted = false
-								lastWord = nil
-								funcStatus = 0
-							else
-								if isDot then
-									if wordBeginsDotted then
-										lastWord = nil
-									else
-										wordBeginsDotted = true
-									end
-								else
-									wordBeginsDotted = false
-									lastWord = nil
-								end
-
-								funcStatus = ((isDot or char == ":") and funcStatus == 1 and 2) or 0
-							end
-						end
-					elseif find(char, "%d") then
-						local _, endPos = find(lineText, "%x+", col)
-						local endPart = sub(lineText, endPos, endPos + 1)
-						if
-							(endPart == "e+" or endPart == "e-") and find(sub(lineText, endPos + 2, endPos + 2), "%d")
-						then
-							endPos = endPos + 1
-						end
-						currentType = 6
-						lastEnding = endPos
-						highlights[col] = 6
+				if lastEnding < col then
+					local pre = preHighlightMap[col]
+					if pre then
+						currentType = pre[1]
+						lastEnding = pre[2]
+						highlights[col] = currentType
 						wordBeginsDotted = false
 						lastWord = nil
 						funcStatus = 0
 					else
-						highlights[col] = currentType
-						local _, endPos = find(lineText, "%s+", col)
-						if endPos then
+						local char = sub(lineText, col, col)
+						if find(char, "[%a_]") then
+							local word = match(lineText, "[%a%d_]+", col)
+							local wordType = (keywords[word] and 7) or (builtIns[word] and 8)
+
+							lastEnding = col + #word - 1
+
+							if wordType ~= 7 then
+								if wordBeginsDotted then
+									local prevBuiltIn = lastWord and builtIns[lastWord]
+									wordType = (
+										prevBuiltIn
+										and type(prevBuiltIn) == "table"
+										and prevBuiltIn[word]
+										and 8
+									) or 10
+								end
+
+								if wordType ~= 8 then
+									local x, y, br = find(lineText, "^%s*([%({\"'])", lastEnding + 1)
+									if x then
+										wordType = (funcStatus > 0 and br == "(" and 16) or 9
+										funcStatus = 0
+									end
+								end
+							else
+								wordType = specialKeywordsTypes[word] or wordType
+								funcStatus = (word == "function" and 1 or 0)
+							end
+
+							lastWord = word
+							wordBeginsDotted = false
+							if funcStatus > 0 then
+								funcStatus = 1
+							end
+
+							if wordType then
+								currentType = wordType
+								highlights[col] = currentType
+							else
+								currentType = nil
+							end
+						elseif find(char, "%p") then
+							local isDot = (char == ".")
+							local isNum = isDot and find(sub(lineText, col + 1, col + 1), "%d")
+							highlights[col] = (isNum and 6 or 5)
+
+							if not isNum then
+								local dotStr = isDot and match(lineText, "%.%.?%.?", col)
+								if dotStr and #dotStr > 1 then
+									currentType = 5
+									lastEnding = col + #dotStr - 1
+									wordBeginsDotted = false
+									lastWord = nil
+									funcStatus = 0
+								else
+									if isDot then
+										if wordBeginsDotted then
+											lastWord = nil
+										else
+											wordBeginsDotted = true
+										end
+									else
+										wordBeginsDotted = false
+										lastWord = nil
+									end
+
+									funcStatus = ((isDot or char == ":") and funcStatus == 1 and 2) or 0
+								end
+							end
+						elseif find(char, "%d") then
+							local _, endPos = find(lineText, "%x+", col)
+							local endPart = sub(lineText, endPos, endPos + 1)
+							if
+								(endPart == "e+" or endPart == "e-")
+								and find(sub(lineText, endPos + 2, endPos + 2), "%d")
+							then
+								endPos = endPos + 1
+							end
+							currentType = 6
 							lastEnding = endPos
+							highlights[col] = 6
+							wordBeginsDotted = false
+							lastWord = nil
+							funcStatus = 0
+						else
+							highlights[col] = currentType
+							local _, endPos = find(lineText, "%s+", col)
+							if endPos then
+								lastEnding = endPos
+							end
 						end
 					end
+				else
+					highlights[col] = currentType
 				end
 			end
 

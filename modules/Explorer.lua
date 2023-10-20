@@ -122,26 +122,23 @@ local function main()
 		local insts = getDescendants(root)
 		for i = 1, #insts do
 			local obj = insts[i]
-			if nodes[obj] then
-				continue
-			end -- Deferred
+			if not nodes[obj] then
+				local par = nodes[ffa(obj, "Instance")]
+				if par then
+					local newNode = { Obj = obj, Parent = par }
+					nodes[obj] = newNode
+					par[#par + 1] = newNode
 
-			local par = nodes[ffa(obj, "Instance")]
-			if not par then
-				continue
-			end
-			local newNode = { Obj = obj, Parent = par }
-			nodes[obj] = newNode
-			par[#par + 1] = newNode
-
-			-- Nil Handling
-			if isNil then
-				nilMap[obj] = true
-				nilCons[obj] = nilCons[obj]
-					or {
-						connectSignal(obj.ChildAdded, addObject),
-						connectSignal(obj.AncestryChanged, moveObject),
-					}
+					-- Nil Handling
+					if isNil then
+						nilMap[obj] = true
+						nilCons[obj] = nilCons[obj]
+							or {
+								connectSignal(obj.ChildAdded, addObject),
+								connectSignal(obj.AncestryChanged, moveObject),
+							}
+					end
+				end
 			end
 		end
 
@@ -464,30 +461,28 @@ local function main()
 			for i = 1, #root do
 				local n = root[i]
 
-				if (isSearching and not searchResults[n]) or n.Del then
-					continue
-				end
-
-				if useNameWidth then
-					local nameWidth = n.NameWidth
-					if not nameWidth then
-						local objName = tostring(n.Obj)
-						nameWidth = nameCache[objName]
+				if not ((isSearching and not searchResults) or nDel) then
+					if useNameWidth then
+						local nameWidth = n.NameWidth
 						if not nameWidth then
-							nameWidth = getTextSize(textServ, objName, 14, font, size).X
-							nameCache[objName] = nameWidth
+							local objName = tostring(n.Obj)
+							nameWidth = nameCache[objName]
+							if not nameWidth then
+								nameWidth = getTextSize(textServ, objName, 14, font, size).X
+								nameCache[objName] = nameWidth
+							end
+							n.NameWidth = nameWidth
 						end
-						n.NameWidth = nameWidth
+						if nameWidth > maxNameWidth then
+							maxNameWidth = nameWidth
+						end
 					end
-					if nameWidth > maxNameWidth then
-						maxNameWidth = nameWidth
-					end
-				end
 
-				tree[count] = n
-				count = count + 1
-				if expanded[n] and #n > 0 then
-					recur(n, depth)
+					tree[count] = n
+					count = count + 1
+					if expanded[n] and #n > 0 then
+						recur(n, depth)
+					end
 				end
 			end
 		end
@@ -2110,7 +2105,7 @@ end
 return search]==]
 
 		local funcStr = template:format(finalHeaders, finalSetups, finalObjectDefs, finalPredicate)
-		local s, func = pcall(loadstring, funcStr)
+		local s, func = pcall(env.loadstring, funcStr)
 		if not s or not func then
 			return nil, specFilterList
 		end
@@ -2852,30 +2847,28 @@ return search]==]
 			for i = 1, #insts do
 				local obj = insts[i]
 				local par = nodes[ffa(obj, "Instance")]
-				if not par then
-					continue
+				if par then
+					local newNode = {
+						Obj = obj,
+						Parent = par,
+					}
+					nodes[obj] = newNode
+					par[#par + 1] = newNode
 				end
-				local newNode = {
-					Obj = obj,
-					Parent = par,
-				}
-				nodes[obj] = newNode
-				par[#par + 1] = newNode
 			end
 		else
 			for i = 1, #insts do
 				local obj = insts[i]
 				local _, parObj = pcall(ffa, obj, "Instance")
 				local par = nodes[parObj]
-				if not par then
-					continue
+				if par then
+					local newNode = {
+						Obj = obj,
+						Parent = par,
+					}
+					nodes[obj] = newNode
+					par[#par + 1] = newNode
 				end
-				local newNode = {
-					Obj = obj,
-					Parent = par,
-				}
-				nodes[obj] = newNode
-				par[#par + 1] = newNode
 			end
 		end
 	end

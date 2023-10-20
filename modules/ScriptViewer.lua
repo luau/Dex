@@ -89,7 +89,7 @@ local function main()
 
 		copy.MouseButton1Click:Connect(function()
 			local source = codeFrame:GetText()
-			setclipboard(source)
+			env.setclipboard(source)
 		end)
 
 		local save = Instance.new("TextButton", window.GuiElems.Content)
@@ -102,10 +102,11 @@ local function main()
 		save.MouseButton1Click:Connect(function()
 			local source = codeFrame:GetText()
 			local filename = "Place_" .. game.PlaceId .. "_Script_" .. os.time() .. ".txt"
-
-			writefile(filename, source)
-			if movefileas or globalcontainer.movefileas then -- TODO: USE ENV
-				(movefileas or globalcontainer.movefileas)(filename, ".txt")
+			if env.writefile then
+				env.writefile(filename, source)
+			end
+			if env.movefileas then -- TODO: USE ENV
+				env.movefileas(filename, ".txt")
 			end
 		end)
 	end

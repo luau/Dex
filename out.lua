@@ -124,26 +124,23 @@ local function main()
 		local insts = getDescendants(root)
 		for i = 1, #insts do
 			local obj = insts[i]
-			if nodes[obj] then
-				continue
-			end -- Deferred
+			if not nodes[obj] then
+				local par = nodes[ffa(obj, "Instance")]
+				if par then
+					local newNode = { Obj = obj, Parent = par }
+					nodes[obj] = newNode
+					par[#par + 1] = newNode
 
-			local par = nodes[ffa(obj, "Instance")]
-			if not par then
-				continue
-			end
-			local newNode = { Obj = obj, Parent = par }
-			nodes[obj] = newNode
-			par[#par + 1] = newNode
-
-			-- Nil Handling
-			if isNil then
-				nilMap[obj] = true
-				nilCons[obj] = nilCons[obj]
-					or {
-						connectSignal(obj.ChildAdded, addObject),
-						connectSignal(obj.AncestryChanged, moveObject),
-					}
+					-- Nil Handling
+					if isNil then
+						nilMap[obj] = true
+						nilCons[obj] = nilCons[obj]
+							or {
+								connectSignal(obj.ChildAdded, addObject),
+								connectSignal(obj.AncestryChanged, moveObject),
+							}
+					end
+				end
 			end
 		end
 
@@ -466,30 +463,28 @@ local function main()
 			for i = 1, #root do
 				local n = root[i]
 
-				if (isSearching and not searchResults[n]) or n.Del then
-					continue
-				end
-
-				if useNameWidth then
-					local nameWidth = n.NameWidth
-					if not nameWidth then
-						local objName = tostring(n.Obj)
-						nameWidth = nameCache[objName]
+				if not ((isSearching and not searchResults) or nDel) then
+					if useNameWidth then
+						local nameWidth = n.NameWidth
 						if not nameWidth then
-							nameWidth = getTextSize(textServ, objName, 14, font, size).X
-							nameCache[objName] = nameWidth
+							local objName = tostring(n.Obj)
+							nameWidth = nameCache[objName]
+							if not nameWidth then
+								nameWidth = getTextSize(textServ, objName, 14, font, size).X
+								nameCache[objName] = nameWidth
+							end
+							n.NameWidth = nameWidth
 						end
-						n.NameWidth = nameWidth
+						if nameWidth > maxNameWidth then
+							maxNameWidth = nameWidth
+						end
 					end
-					if nameWidth > maxNameWidth then
-						maxNameWidth = nameWidth
-					end
-				end
 
-				tree[count] = n
-				count = count + 1
-				if expanded[n] and #n > 0 then
-					recur(n, depth)
+					tree[count] = n
+					count = count + 1
+					if expanded[n] and #n > 0 then
+						recur(n, depth)
+					end
 				end
 			end
 		end
@@ -2112,7 +2107,7 @@ end
 return search]==]
 
 		local funcStr = template:format(finalHeaders, finalSetups, finalObjectDefs, finalPredicate)
-		local s, func = pcall(loadstring, funcStr)
+		local s, func = pcall(env.loadstring, funcStr)
 		if not s or not func then
 			return nil, specFilterList
 		end
@@ -2854,30 +2849,28 @@ return search]==]
 			for i = 1, #insts do
 				local obj = insts[i]
 				local par = nodes[ffa(obj, "Instance")]
-				if not par then
-					continue
+				if par then
+					local newNode = {
+						Obj = obj,
+						Parent = par,
+					}
+					nodes[obj] = newNode
+					par[#par + 1] = newNode
 				end
-				local newNode = {
-					Obj = obj,
-					Parent = par,
-				}
-				nodes[obj] = newNode
-				par[#par + 1] = newNode
 			end
 		else
 			for i = 1, #insts do
 				local obj = insts[i]
 				local _, parObj = pcall(ffa, obj, "Instance")
 				local par = nodes[parObj]
-				if not par then
-					continue
+				if par then
+					local newNode = {
+						Obj = obj,
+						Parent = par,
+					}
+					nodes[obj] = newNode
+					par[#par + 1] = newNode
 				end
-				local newNode = {
-					Obj = obj,
-					Parent = par,
-				}
-				nodes[obj] = newNode
-				par[#par + 1] = newNode
 			end
 		end
 	end
@@ -3157,7 +3150,20 @@ local function main()
 			local slashchar = byte("/")
 			-- local D = string.byte("D", 1)
 			local E = byte("E")
-
+			local function replaceEntities(s, entities)
+				return s:gsub("&([^;]+);", entities)
+			end
+			local function defaultEntityTable()
+				return { quot = '"', apos = "'", lt = "<", gt = ">", amp = "&", tab = "\t", nbsp = " " }
+			end
+			local function createEntityTable(docEntities, resultEntities)
+				local entities = resultEntities or defaultEntityTable()
+				for _, e in next, docEntities do
+					e.value = replaceEntities(e.value, entities)
+					entities[e.name] = e.value
+				end
+				return entities
+			end
 			local function parse(s, evalEntities)
 				-- remove comments
 				s = s:gsub("<!%-%-(.-)%-%->", "")
@@ -3233,25 +3239,8 @@ local function main()
 				return { children = t, entities = entities, tentities = tentities }
 			end
 
-			function parseText(txt)
+			local function parseText(txt)
 				return parse(txt)
-			end
-
-			function defaultEntityTable()
-				return { quot = '"', apos = "'", lt = "<", gt = ">", amp = "&", tab = "\t", nbsp = " " }
-			end
-
-			function replaceEntities(s, entities)
-				return s:gsub("&([^;]+);", entities)
-			end
-
-			function createEntityTable(docEntities, resultEntities)
-				entities = resultEntities or defaultEntityTable()
-				for _, e in next, docEntities do
-					e.value = replaceEntities(e.value, entities)
-					entities[e.name] = e.value
-				end
-				return entities
 			end
 
 			return parseText
@@ -3461,7 +3450,7 @@ local function main()
 			return
 		end
 
-		local s, data = pcall(game.HttpGet, game, url)
+		local s, data = pcall(env.HttpGet.InvokeServer, env.HttpGet, url)
 		if not s then
 			return
 		end
@@ -7159,70 +7148,68 @@ local function main()
 
 			for i = 1, #found do
 				local pos = found[i]
-				if pos <= lastEnding then
-					continue
-				end
-
-				local ending = pos
-				local typ = foundMap[pos]
-				if typ == 1 then
-					ending = find(text, '"', pos + 1, true)
-					while ending and sub(text, ending - 1, ending - 1) == "\\" do
-						ending = find(text, '"', ending + 1, true)
-					end
-					if not ending then
-						ending = textLen
-					end
-				elseif typ == 2 then
-					ending = find(text, "'", pos + 1, true)
-					while ending and sub(text, ending - 1, ending - 1) == "\\" do
-						ending = find(text, "'", ending + 1, true)
-					end
-					if not ending then
-						ending = textLen
-					end
-				elseif typ == 3 then
-					_, ending = find(text, "]" .. extras[pos] .. "]", pos + 1, true)
-					if not ending then
-						ending = textLen
-					end
-				elseif typ == 4 then
-					local ahead = foundMap[pos + 2]
-
-					if ahead == 3 then
-						_, ending = find(text, "]" .. extras[pos + 2] .. "]", pos + 1, true)
+				if lastEnding < pos then
+					local ending = pos
+					local typ = foundMap[pos]
+					if typ == 1 then
+						ending = find(text, '"', pos + 1, true)
+						while ending and sub(text, ending - 1, ending - 1) == "\\" do
+							ending = find(text, '"', ending + 1, true)
+						end
 						if not ending then
 							ending = textLen
 						end
-					else
-						ending = find(text, "\n", pos + 1, true) or textLen
-					end
-				end
+					elseif typ == 2 then
+						ending = find(text, "'", pos + 1, true)
+						while ending and sub(text, ending - 1, ending - 1) == "\\" do
+							ending = find(text, "'", ending + 1, true)
+						end
+						if not ending then
+							ending = textLen
+						end
+					elseif typ == 3 then
+						_, ending = find(text, "]" .. extras[pos] .. "]", pos + 1, true)
+						if not ending then
+							ending = textLen
+						end
+					elseif typ == 4 then
+						local ahead = foundMap[pos + 2]
 
-				while pos > lineEnd do
-					curLine = curLine + 1
-					--lineTableCount = 1
-					lineEnd = newLines[curLine] or textLen + 1
-				end
-				while true do
-					local lineTable = foundHighlights[curLine]
-					if not lineTable then
-						lineTable = {}
-						foundHighlights[curLine] = lineTable
+						if ahead == 3 then
+							_, ending = find(text, "]" .. extras[pos + 2] .. "]", pos + 1, true)
+							if not ending then
+								ending = textLen
+							end
+						else
+							ending = find(text, "\n", pos + 1, true) or textLen
+						end
 					end
-					lineTable[pos] = { typ, ending }
-					--lineTableCount = lineTableCount + 1
 
-					if ending > lineEnd then
+					while pos > lineEnd do
 						curLine = curLine + 1
+						--lineTableCount = 1
 						lineEnd = newLines[curLine] or textLen + 1
-					else
-						break
 					end
-				end
+					while true do
+						local lineTable = foundHighlights[curLine]
+						if not lineTable then
+							lineTable = {}
+							foundHighlights[curLine] = lineTable
+						end
+						lineTable[pos] = { typ, ending }
+						--lineTableCount = lineTableCount + 1
 
-				lastEnding = ending
-				--if i < 200 then print(curLine) end
+						if ending > lineEnd then
+							curLine = curLine + 1
+							lineEnd = newLines[curLine] or textLen + 1
+						else
+							break
+						end
+					end
+
+					lastEnding = ending
+					--if i < 200 then print(curLine) end
+				end
 			end
 			self.PreHighlights = foundHighlights
 			--print(tick()-start)
@@ -7241,7 +7228,6 @@ local function main()
 			local highlights = {}
 			local preHighlights = self.PreHighlights[line] or {}
 			local lineText = self.Lines[line] or ""
-			local lineLen = #lineText
 			local lastEnding = 0
 			local currentType = 0
 			local lastWord = nil
@@ -7262,107 +7248,111 @@ local function main()
 			end
 
 			for col = 1, #lineText do
-				if col <= lastEnding then
-					highlights[col] = currentType
-					continue
-				end
-
-				local pre = preHighlightMap[col]
-				if pre then
-					currentType = pre[1]
-					lastEnding = pre[2]
-					highlights[col] = currentType
-					wordBeginsDotted = false
-					lastWord = nil
-					funcStatus = 0
-				else
-					local char = sub(lineText, col, col)
-					if find(char, "[%a_]") then
-						local word = match(lineText, "[%a%d_]+", col)
-						local wordType = (keywords[word] and 7) or (builtIns[word] and 8)
-
-						lastEnding = col + #word - 1
-
-						if wordType ~= 7 then
-							if wordBeginsDotted then
-								local prevBuiltIn = lastWord and builtIns[lastWord]
-								wordType = (prevBuiltIn and type(prevBuiltIn) == "table" and prevBuiltIn[word] and 8)
-									or 10
-							end
-
-							if wordType ~= 8 then
-								local x, y, br = find(lineText, "^%s*([%({\"'])", lastEnding + 1)
-								if x then
-									wordType = (funcStatus > 0 and br == "(" and 16) or 9
-									funcStatus = 0
-								end
-							end
-						else
-							wordType = specialKeywordsTypes[word] or wordType
-							funcStatus = (word == "function" and 1 or 0)
-						end
-
-						lastWord = word
-						wordBeginsDotted = false
-						if funcStatus > 0 then
-							funcStatus = 1
-						end
-
-						if wordType then
-							currentType = wordType
-							highlights[col] = currentType
-						else
-							currentType = nil
-						end
-					elseif find(char, "%p") then
-						local isDot = (char == ".")
-						local isNum = isDot and find(sub(lineText, col + 1, col + 1), "%d")
-						highlights[col] = (isNum and 6 or 5)
-
-						if not isNum then
-							local dotStr = isDot and match(lineText, "%.%.?%.?", col)
-							if dotStr and #dotStr > 1 then
-								currentType = 5
-								lastEnding = col + #dotStr - 1
-								wordBeginsDotted = false
-								lastWord = nil
-								funcStatus = 0
-							else
-								if isDot then
-									if wordBeginsDotted then
-										lastWord = nil
-									else
-										wordBeginsDotted = true
-									end
-								else
-									wordBeginsDotted = false
-									lastWord = nil
-								end
-
-								funcStatus = ((isDot or char == ":") and funcStatus == 1 and 2) or 0
-							end
-						end
-					elseif find(char, "%d") then
-						local _, endPos = find(lineText, "%x+", col)
-						local endPart = sub(lineText, endPos, endPos + 1)
-						if
-							(endPart == "e+" or endPart == "e-") and find(sub(lineText, endPos + 2, endPos + 2), "%d")
-						then
-							endPos = endPos + 1
-						end
-						currentType = 6
-						lastEnding = endPos
-						highlights[col] = 6
+				if lastEnding < col then
+					local pre = preHighlightMap[col]
+					if pre then
+						currentType = pre[1]
+						lastEnding = pre[2]
+						highlights[col] = currentType
 						wordBeginsDotted = false
 						lastWord = nil
 						funcStatus = 0
 					else
-						highlights[col] = currentType
-						local _, endPos = find(lineText, "%s+", col)
-						if endPos then
+						local char = sub(lineText, col, col)
+						if find(char, "[%a_]") then
+							local word = match(lineText, "[%a%d_]+", col)
+							local wordType = (keywords[word] and 7) or (builtIns[word] and 8)
+
+							lastEnding = col + #word - 1
+
+							if wordType ~= 7 then
+								if wordBeginsDotted then
+									local prevBuiltIn = lastWord and builtIns[lastWord]
+									wordType = (
+										prevBuiltIn
+										and type(prevBuiltIn) == "table"
+										and prevBuiltIn[word]
+										and 8
+									) or 10
+								end
+
+								if wordType ~= 8 then
+									local x, y, br = find(lineText, "^%s*([%({\"'])", lastEnding + 1)
+									if x then
+										wordType = (funcStatus > 0 and br == "(" and 16) or 9
+										funcStatus = 0
+									end
+								end
+							else
+								wordType = specialKeywordsTypes[word] or wordType
+								funcStatus = (word == "function" and 1 or 0)
+							end
+
+							lastWord = word
+							wordBeginsDotted = false
+							if funcStatus > 0 then
+								funcStatus = 1
+							end
+
+							if wordType then
+								currentType = wordType
+								highlights[col] = currentType
+							else
+								currentType = nil
+							end
+						elseif find(char, "%p") then
+							local isDot = (char == ".")
+							local isNum = isDot and find(sub(lineText, col + 1, col + 1), "%d")
+							highlights[col] = (isNum and 6 or 5)
+
+							if not isNum then
+								local dotStr = isDot and match(lineText, "%.%.?%.?", col)
+								if dotStr and #dotStr > 1 then
+									currentType = 5
+									lastEnding = col + #dotStr - 1
+									wordBeginsDotted = false
+									lastWord = nil
+									funcStatus = 0
+								else
+									if isDot then
+										if wordBeginsDotted then
+											lastWord = nil
+										else
+											wordBeginsDotted = true
+										end
+									else
+										wordBeginsDotted = false
+										lastWord = nil
+									end
+
+									funcStatus = ((isDot or char == ":") and funcStatus == 1 and 2) or 0
+								end
+							end
+						elseif find(char, "%d") then
+							local _, endPos = find(lineText, "%x+", col)
+							local endPart = sub(lineText, endPos, endPos + 1)
+							if
+								(endPart == "e+" or endPart == "e-")
+								and find(sub(lineText, endPos + 2, endPos + 2), "%d")
+							then
+								endPos = endPos + 1
+							end
+							currentType = 6
 							lastEnding = endPos
+							highlights[col] = 6
+							wordBeginsDotted = false
+							lastWord = nil
+							funcStatus = 0
+						else
+							highlights[col] = currentType
+							local _, endPos = find(lineText, "%s+", col)
+							if endPos then
+								lastEnding = endPos
+							end
 						end
 					end
+				else
+					highlights[col] = currentType
 				end
 			end
 
@@ -14875,7 +14865,7 @@ local function main()
 
 		copy.MouseButton1Click:Connect(function()
 			local source = codeFrame:GetText()
-			setclipboard(source)
+			env.setclipboard(source)
 		end)
 
 		local save = Instance.new("TextButton", window.GuiElems.Content)
@@ -14888,10 +14878,11 @@ local function main()
 		save.MouseButton1Click:Connect(function()
 			local source = codeFrame:GetText()
 			local filename = "Place_" .. game.PlaceId .. "_Script_" .. os.time() .. ".txt"
-
-			writefile(filename, source)
-			if movefileas or globalcontainer.movefileas then -- TODO: USE ENV
-				(movefileas or globalcontainer.movefileas)(filename, ".txt")
+			if env.writefile then
+				env.writefile(filename, source)
+			end
+			if env.movefileas then -- TODO: USE ENV
+				env.movefileas(filename, ".txt")
 			end
 		end)
 	end
@@ -14917,54 +14908,67 @@ end,
 	If you want more info, you can join the server: https://discord.io/zinnia
 	Note that very limited to no support will be provided.
 ]]
+local service = setmetatable({}, {
+	__index = function(self, name)
+		local serv = game:GetService(name)
+		self[name] = serv
+		return serv
+	end,
+})
+
 local pcall, next, ipairs = pcall, next, ipairs
-local finder, globalcontainer = loadstring(
-	game:HttpGet("https://raw.githubusercontent.com/lua-u/SomeHub/main/UniversalMethodFinder.luau", true),
-	"UniversalMethodFinder"
-)()
+
+local env = getfenv() or _G or shared
+
+local req_load = require(script.Parent.loadstring) -- ! YOU'LL NEED A CUSTOM LOADSTRING MODULE
+env.loadstring = function(String)
+	return req_load(String)
+end -- Because this module is bad at handling chunkname param
+env.HttpGet = script.Parent.HttpGet -- ! YOU'LL NEED A HTTPGET PROXY (CLIENT CANT DO HTTP REQUESTS NORMALLY), DONT FORGET TO ENABLE HTTPREQUESTS ON THE SERVER (game.HttpService.HttpEnabled = true)
 
 if debug then
 	if debug.getupvalues then
-		globalcontainer.getupvalues = debug.getupvalues
+		env.getupvalues = debug.getupvalues
 	end
 	if debug.getconstants then
-		globalcontainer.getconstants = debug.getconstants
+		env.getconstants = debug.getconstants
 	end
 	if debug.getregistry then
-		globalcontainer.getreg = debug.getregistry
+		env.getreg = debug.getregistry
 	end
 end
-globalcontainer.hash = loadstring(
-	game:HttpGet("https://raw.githubusercontent.com/zzerexx/scripts/main/Libraries/Hash.lua"),
+env.decompile = function(Script)
+	return Script.Source
+end
+env.getloadedmodules = function()
+	local r = {}
+
+	for _, v in ipairs(game:GetDescendants()) do
+		if v:IsA("ModuleScript") then
+			r[#r + 1] = v
+		end
+	end
+
+	return r
+end
+env.getnilinstances = function()
+	local r = {}
+
+	for _, v in ipairs(game:GetDescendants()) do
+		if typeof(v) == "Instance" and v.Parent == nil and v ~= game then
+			r[#r + 1] = v
+		end
+	end
+
+	return r
+end
+env.rconsoleprint = print
+
+env.hash = env.loadstring(
+	env.HttpGet:InvokeServer("https://raw.githubusercontent.com/zzerexx/scripts/main/Libraries/Hash.lua"),
 	"HashLib"
 )().sha384
-finder({
-	appendfile = '(...):find("file",nil,true) and (...):find("append",nil,true)',
-	checkcaller = '(...):find("check",nil,true) and (...):find("caller",nil,true)',
-	decompile = '((...):find("decomp",nil,true) and (...):sub(#...) ~= "s") or (...):find("assembl",nil,true)',
-	getconstants = '(...):find("get",nil,true) and ((...):find("consts",nil,true) or (...):find("constants",nil,true))',
-	getgc = '(...):find("get",nil,true) and (...):find("gc",nil,true)',
-	gethui = '(...):find("get",nil,true) and ((...):find("hui",nil,true) or (...):find("hid",nil,true) and (...):find("gui",nil,true))',
-	getloadedmodules = '(...):find("get",nil,true) and (...):find("module",nil,true)',
-	getnilinstances = '(...):find("nil",nil,true)',
-	getreg = '(...):find("get",nil,true) and (...):find("reg",nil,true)',
-	getsynasset = '(...):find("get",nil,true) and (...):find("asset",nil,true)',
-	getupvalues = '(...):find("get",nil,true) and (...):find("upval",nil,true) and  (...):find("s",nil,true)',
-	hash = '(...):find("hash",nil,true)',
-	identifyexecutor = '(...):find("executor",nil,true)',
-	islclosure = 'if (...):find("is",nil,true) then local closure = (...):find("closure",nil,true) local l = (...):find("l",nil,true) if closure and l then return closure > l end end',
-	listfiles = '(...):find("file",nil,true) and (...):find("list",nil,true)',
-	loadfile = '(...):find("file",nil,true) and (...):find("load",nil,true)',
-	makefolder = '(...):find("folder",nil,true) and (...):find("make",nil,true)',
-	movefileas = '(...):find("file",nil,true) and (...):find("move",nil,true)',
-	protectgui = '(...):find("protect",nil,true) and (...):find("gui",nil,true) and not (...):find("un",nil,true)',
-	rconsoleprint = '(...):find("console",nil,true) and (...):find("print",nil,true) and (...):find("r",nil,true)==1',
-	readfile = '(...):find("file",nil,true) and (...):find("read",nil,true)',
-	saveinstance = '(...):find("save",nil,true)',
-	setclipboard = '(...):find("clip",nil,true) or (...):find("board",nil,true) or (...):find("copy",nil,true) and (...):find("string",nil,true)',
-	setfflag = '(...):find("set",nil,true) and (...):find("fflag",nil,true)',
-	writefile = '(...):find("file",nil,true) and (...):find("write",nil,true)',
-}, true)
+
 local function RepoPath(url)
 	if url then
 		-- Extract the path from the URL
@@ -14977,11 +14981,11 @@ local function RepoPath(url)
 		return "lua-u/Dex"
 	end
 end
-globalenv = globalenv or getgenv and getgenv() or _G or shared
+
 local GitRepoName = RepoPath(({ ... })[1])
-globalenv.GitRepoName = GitRepoName
+env.GitRepoName = GitRepoName
 -- Main vars
-local Main, Explorer, Properties, ScriptViewer, DefaultSettings, Notebook, Serializer, Lib
+local Main, Explorer, Properties, ScriptViewer, DefaultSettings, Notebook, Lib
 local API, RMD, Docs
 
 -- Default Settings
@@ -15063,14 +15067,7 @@ end)()
 -- Vars
 local Settings = {}
 local Apps = {}
-local env = {}
-local service = setmetatable({}, {
-	__index = function(self, name)
-		local serv = game:GetService(name)
-		self[name] = serv
-		return serv
-	end,
-})
+
 local plr = service.Players.LocalPlayer or service.Players.PlayerAdded:Wait()
 
 local create = function(data)
@@ -15139,8 +15136,8 @@ Main = (function()
 	end
 
 	Main.Error = function(str)
-		if rconsoleprint or globalcontainer.rconsoleprint then
-			(rconsoleprint or globalcontainer.rconsoleprint)("DEX ERROR: " .. tostring(str) .. "\n")
+		if env.rconsoleprint then
+			env.rconsoleprint("DEX ERROR: " .. tostring(str) .. "\n")
 			coroutine.yield()
 		else
 			error(str)
@@ -15148,90 +15145,90 @@ Main = (function()
 	end
 
 	Main.LoadModule = function(name)
-		if Main.Elevated then -- If you don't have filesystem api then ur outta luck tbh
-			local control
+		-- if Main.Elevated then -- If you don't have filesystem api then ur outta luck tbh
+		local control
 
-			if EmbeddedModules then -- Offline Modules
-				control = EmbeddedModules[name]()
+		if EmbeddedModules then -- Offline Modules
+			control = EmbeddedModules[name]()
 
-				if not control then
-					Main.Error("Missing Embedded Module: " .. name)
-				end
-			elseif _G.DebugLoadModel then -- Load Debug Model File
-				local model = Main.DebugModel
-				if not model then
-					model = game:GetObjects((getsynasset or globalcontainer.getsynasset)("AfterModules.rbxm"))[1]
-				end
-
-				control = loadstring(model.Modules[name].Source)()
-				print("Locally Loaded Module", name, control)
-			else
-				-- Get hash data
-				local hashs = Main.ModuleHashData
-				if not hashs then
-					local s, hashDataStr = pcall(
-						game.HttpGet,
-						game,
-						"https://raw.githubusercontent.com/" .. Main.GitRepoName .. "/ModuleHashs.dat"
-					)
-					if not s then
-						Main.Error("Failed to get module hashs")
-					end
-
-					local s, hashData = pcall(service.HttpService.JSONDecode, service.HttpService, hashDataStr)
-					if not s then
-						Main.Error("Failed to decode module hash JSON")
-					end
-
-					hashs = hashData
-					Main.ModuleHashData = hashs
-				end
-
-				-- Check if local copy exists with matching hashs
-				local hashfunc = (syn and syn.crypt.hash or globalcontainer.hash) or function()
-					return ""
-				end
-				local filePath = "dex/ModuleCache/" .. name .. ".lua"
-				local s, moduleStr = pcall(env.readfile, filePath)
-
-				if s and hashfunc(moduleStr) == hashs[name] then
-					control = loadstring(moduleStr)()
-				else
-					-- Download and cache
-					local s, moduleStr = pcall(
-						game.HttpGet,
-						game,
-						"https://raw.githubusercontent.com/" .. Main.GitRepoName .. "/master/modules/" .. name .. ".lua"
-					)
-					if not s then
-						Main.Error("Failed to get external module data of " .. name)
-					end
-
-					env.writefile(filePath, moduleStr)
-					control = loadstring(moduleStr)()
-				end
+			if not control then
+				Main.Error("Missing Embedded Module: " .. name)
+			end
+		elseif _G.DebugLoadModel then -- Load Debug Model File
+			local model = Main.DebugModel
+			if not model then
+				model = game:GetObjects((env.getsynasset)("AfterModules.rbxm"))[1]
 			end
 
-			Main.AppControls[name] = control
-			control.InitDeps(Main.GetInitDeps())
-
-			local moduleData = control.Main()
-			Apps[name] = moduleData
-			return moduleData
+			control = env.loadstring(model.Modules[name].Source)()
+			print("Locally Loaded Module", name, control)
 		else
-			local module = script:WaitForChild("Modules"):WaitForChild(name, 2)
-			if not module then
-				Main.Error("CANNOT FIND MODULE " .. name)
+			-- Get hash data
+			local hashs = Main.ModuleHashData
+			if not hashs then
+				local s, hashDataStr = pcall(
+					env.HttpGet.InvokeServer,
+					env.HttpGet,
+					"https://raw.githubusercontent.com/" .. Main.GitRepoName .. "/ModuleHashs.dat"
+				)
+				if not s then
+					Main.Error("Failed to get module hashs")
+				end
+
+				local s, hashData = pcall(service.HttpService.JSONDecode, service.HttpService, hashDataStr)
+				if not s then
+					Main.Error("Failed to decode module hash JSON")
+				end
+
+				hashs = hashData
+				Main.ModuleHashData = hashs
 			end
 
-			local control = require(module)
-			Main.AppControls[name] = control
-			control.InitDeps(Main.GetInitDeps())
+			-- Check if local copy exists with matching hashs
+			local hashfunc = env.hash or function()
+				return ""
+			end
+			local filePath = "dex/ModuleCache/" .. name .. ".lua"
+			local s, moduleStr = pcall(env.readfile, filePath)
 
-			local moduleData = control.Main()
-			Apps[name] = moduleData
-			return moduleData
+			if s and hashfunc(moduleStr) == hashs[name] then
+				control = env.loadstring(moduleStr)()
+			else
+				-- Download and cache
+				local s, moduleStr = pcall(
+					env.HttpGet.InvokeServer,
+					env.HttpGet,
+					"https://raw.githubusercontent.com/" .. Main.GitRepoName .. "/master/modules/" .. name .. ".lua"
+				)
+				if not s then
+					Main.Error("Failed to get external module data of " .. name)
+				end
+
+				env.writefile(filePath, moduleStr)
+				control = env.loadstring(moduleStr)()
+			end
 		end
+
+		Main.AppControls[name] = control
+		control.InitDeps(Main.GetInitDeps())
+
+		local moduleData = control.Main()
+		Apps[name] = moduleData
+		return moduleData
+		-- else
+		-- 	local module = script:WaitForChild("Modules"):WaitForChild(name, 2)
+		-- 	if not module then
+		-- 		Main.Error("CANNOT FIND MODULE " .. name)
+		-- 	end
+
+		-- 	local control = require(module)
+		-- 	Main.AppControls[name] = control
+		-- 	control.InitDeps(Main.GetInitDeps())
+
+		-- 	local moduleData = control.Main()
+		-- 	Apps[name] = moduleData
+		-- 	return moduleData
+		-- end
 	end
 
 	Main.LoadModules = function()
@@ -15274,35 +15271,7 @@ Main = (function()
 			end,
 		})
 
-		-- file
-		env.readfile = readfile or globalcontainer.readfile
-		env.writefile = writefile or globalcontainer.writefile
-		env.appendfile = appendfile or globalcontainer.appendfile
-		env.makefolder = makefolder or globalcontainer.makefolder
-		env.listfiles = listfiles or globalcontainer.listfiles
-		env.loadfile = loadfile or globalcontainer.loadfile
-		env.saveinstance = saveinstance or globalcontainer.saveinstance
-
 		-- debug
-		env.getupvalues = debug.getupvalues or getupvals or globalcontainer.getupvalues
-		env.getconstants = debug.getconstants or getconsts or globalcontainer.getconstants
-		env.islclosure = islclosure or is_l_closure or globalcontainer.islclosure
-		env.checkcaller = checkcaller or globalcontainer.checkcaller
-		env.getreg = getreg or globalcontainer.getreg
-		env.getgc = getgc or globalcontainer.getgc
-
-		-- other
-		env.setfflag = setfflag or globalcontainer.setfflag
-		env.decompile = decompile or globalcontainer.decompile
-		env.protectgui = protect_gui or (syn and syn.protect_gui) or globalcontainer.protectgui
-		env.gethui = gethui or globalcontainer.gethui
-		env.setclipboard = setclipboard or globalcontainer.setclipboard
-		env.getnilinstances = getnilinstances or get_nil_instances or globalcontainer.getnilinstances
-		env.getloadedmodules = getloadedmodules or globalcontainer.getloadedmodules
-
-		if identifyexecutor or globalcontainer.identifyexecutor then
-			Main.Executor = (identifyexecutor or globalcontainer.identifyexecutor)()
-		end
 
 		Main.GuiHolder = Main.Elevated and service.CoreGui or plr:FindFirstChildOfClass("PlayerGui")
 
@@ -15340,7 +15309,7 @@ Main = (function()
 		
 		if game ~= workspace.Parent then incompatibleMessage("WRAPPER NO CACHE") end
 		
-		if Main.Elevated and not loadstring("for i = 1,1 do continue end") then incompatibleMessage("CAN'T CONTINUE OR NO LOADSTRING") end
+		if Main.Elevated and not env.loadstring("for i = 1,1 do continue end") then incompatibleMessage("CAN'T CONTINUE OR NO LOADSTRING") end
 		
 		local obj = newproxy(true)
 		local mt = getmetatable(obj)
@@ -15422,23 +15391,24 @@ Main = (function()
 
 	Main.FetchAPI = function()
 		local api, rawAPI
-		if Main.Elevated then
-			if Main.LocalDepsUpToDate() then
-				local localAPI = Lib.ReadFile("dex/rbx_api.dat")
-				if localAPI then
-					rawAPI = localAPI
-				else
-					Main.DepsVersionData[1] = ""
-				end
-			end
-			rawAPI = rawAPI or game:HttpGet("https://setup.rbxcdn.com/" .. Main.RobloxVersion .. "-API-Dump.json")
-		else
-			if script:FindFirstChild("API") then
-				rawAPI = require(script.API)
+		-- if Main.Elevated then
+		if Main.LocalDepsUpToDate() then
+			local localAPI = Lib.ReadFile("dex/rbx_api.dat")
+			if localAPI then
+				rawAPI = localAPI
 			else
-				error("NO API EXISTS")
+				Main.DepsVersionData[1] = ""
 			end
 		end
+		rawAPI = rawAPI
+			or env.HttpGet:InvokeServer("https://setup.rbxcdn.com/" .. Main.RobloxVersion .. "-API-Dump.json")
+		-- else
+		-- 	if script:FindFirstChild("API") then
+		-- 		rawAPI = require(script.API)
+		-- 	else
+		-- 		error("NO API EXISTS")
+		-- 	end
+		-- end
 		Main.RawAPI = rawAPI
 		api = service.HttpService:JSONDecode(rawAPI)
 
@@ -15590,26 +15560,26 @@ Main = (function()
 
 	Main.FetchRMD = function()
 		local rawXML
-		if Main.Elevated then
-			if Main.LocalDepsUpToDate() then
-				local localRMD = Lib.ReadFile("dex/rbx_rmd.dat")
-				if localRMD then
-					rawXML = localRMD
-				else
-					Main.DepsVersionData[1] = ""
-				end
-			end
-			rawXML = rawXML
-				or game:HttpGet(
-					"https://raw.githubusercontent.com/CloneTrooper1019/Roblox-Client-Tracker/roblox/ReflectionMetadata.xml"
-				)
-		else
-			if script:FindFirstChild("RMD") then
-				rawXML = require(script.RMD)
+		-- if Main.Elevated then
+		if Main.LocalDepsUpToDate() then
+			local localRMD = Lib.ReadFile("dex/rbx_rmd.dat")
+			if localRMD then
+				rawXML = localRMD
 			else
-				error("NO RMD EXISTS")
+				Main.DepsVersionData[1] = ""
 			end
 		end
+		rawXML = rawXML
+			or env.HttpGet:InvokeServer(
+				"https://raw.githubusercontent.com/CloneTrooper1019/Roblox-Client-Tracker/roblox/ReflectionMetadata.xml"
+			)
+		-- else
+		-- 	if script:FindFirstChild("RMD") then
+		-- 		rawXML = require(script.RMD)
+		-- 	else
+		-- 		error("NO RMD EXISTS")
+		-- 	end
+		-- end
 		Main.RawRMD = rawXML
 		local parsed = Lib.ParseXML(rawXML)
 		local classList = parsed.children[1].children[1].children
@@ -15711,26 +15681,26 @@ Main = (function()
 
 	Main.FetchDocs = function()
 		local rawDocs
-		if Main.Elevated then
-			if Main.LocalDepsUpToDate() then
-				local localDocs = Lib.ReadFile("dex/rbx_docs.dat")
-				if localDocs then
-					rawDocs = localDocs
-				else
-					Main.DepsVersionData[1] = ""
-				end
-			end
-			rawDocs = rawDocs
-				or game:HttpGet(
-					"https://raw.githubusercontent.com/MaximumADHD/Roblox-Client-Tracker/roblox/api-docs/en-us.json"
-				)
-		else
-			if script:FindFirstChild("Docs") then
-				rawDocs = require(script.Docs)
+		-- if Main.Elevated then
+		if Main.LocalDepsUpToDate() then
+			local localDocs = Lib.ReadFile("dex/rbx_docs.dat")
+			if localDocs then
+				rawDocs = localDocs
 			else
-				error("NO DOCS EXIST")
+				Main.DepsVersionData[1] = ""
 			end
 		end
+		rawDocs = rawDocs
+			or env.HttpGet:InvokeServer(
+				"https://raw.githubusercontent.com/MaximumADHD/Roblox-Client-Tracker/roblox/api-docs/en-us.json"
+			)
+		-- else
+		-- 	if script:FindFirstChild("Docs") then
+		-- 		rawDocs = require(script.Docs)
+		-- 	else
+		-- 		error("NO DOCS EXIST")
+		-- 	end
+		-- end
 
 		Main.RawDocs = rawDocs
 
@@ -16590,11 +16560,10 @@ Main = (function()
 	end
 
 	Main.SetupFilesystem = function()
-		if not env.writefile or not env.makefolder then
+		local makefolder = env.makefolder
+		if not makefolder then
 			return
 		end
-
-		local writefile, makefolder = env.writefile, env.makefolder
 
 		makefolder("dex")
 		makefolder("dex/assets")
@@ -16609,8 +16578,9 @@ Main = (function()
 
 	Main.Init = function()
 		Main.Elevated = pcall(function()
-			local a = service.CoreGui:GetFullName()
+			service.CoreGui:GetFullName()
 		end)
+
 		Main.InitEnv()
 		Main.LoadSettings()
 		Main.SetupFilesystem()
@@ -16675,17 +16645,18 @@ Main = (function()
 
 		-- Fetch version if needed
 		intro.SetProgress("Fetching Roblox Version", 0.2)
+
 		if Main.Elevated then
 			local fileVer = Lib.ReadFile("dex/deps_version.dat")
-			Main.ClientVersion = Version()
 			if fileVer then
 				Main.DepsVersionData = fileVer:split("\n")
 				if Main.LocalDepsUpToDate() then
 					Main.RobloxVersion = Main.DepsVersionData[2]
 				end
 			end
-			Main.RobloxVersion = Main.RobloxVersion or game:HttpGet("https://setup.rbxcdn.com/versionQTStudio")
 		end
+		Main.ClientVersion = version()
+		Main.RobloxVersion = Main.RobloxVersion or env.HttpGet:InvokeServer("https://setup.rbxcdn.com/versionQTStudio")
 
 		-- Fetch external deps
 		intro.SetProgress("Fetching API", 0.35)

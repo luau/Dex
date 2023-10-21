@@ -2878,6 +2878,9 @@ return search]==]
 		if gameProcessedEvent then
 			return
 		end
+		if not Explorer.Window:IsVisible() then
+			return
+		end
 
 		if Settings.Explorer.ClickSelect and input.UserInputType == Enum.UserInputType.MouseButton1 then
 			local Target = mouse.Target

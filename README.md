@@ -76,7 +76,7 @@ List of stuff that I planned do before I realized that I shouldn't be working on
 - Plugins
 	* Easy way to add some stuff such as right click options, search filters, commands, etc
 	* Access to dex's api for windows, modules, etc
-
+- Mobile Support
 ## Missing stuff from old Dex
 Features that existed in old Dex that I didn't get to make. These should be the first things you add if you plan to continue / edit this.
 - ~~Click to select~~

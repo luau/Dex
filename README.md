@@ -1,11 +1,18 @@
 # Loadstring
-
+## Custom HttpGet Proxy & Loadstring are required
+## Check [Full Package Releases](/releases/latest) if you don't have custom
 ```lua
 local RepositoryName = "Dex"
 local File = "out.lua"
-local link = "https://raw.githubusercontent.com/lua-u/"..RepositoryName.."/master/"..File
-env.loadstring(env.HttpGet:InvokeServer(link, true), "Dex")(link)
+local link = "https://raw.githubusercontent.com/lua-u/" .. RepositoryName .. "/Executor-Free/" .. File
+--game.HttpService.HttpEnabled = true -- ! RUN THIS IN STUDIO CONSOLE OR USE SETTINGS
+--settings().Studio.ScriptTimeoutLength = -1 -- ! RUN THIS IN STUDIO CONSOLE IF YOU USE THIS VARIANT OF DEX (DUE TO POSSIBLE TIMEOUT BECAUSE OF LOADSTRING)
+local req_load = require(script.Parent:WaitForChild("loadstring")) -- ! YOU'LL NEED A CUSTOM LOADSTRING MODULE -- we use a modified version of https://www.roblox.com/library/4689019964/
+local loadstring = function(String)
+	return req_load(String) -- Because this module is bad at handling chunkname param
+end
 
+loadstring(script.Parent:WaitForChild("HttpGet"):InvokeServer(link), "Dex") -- ! YOU'LL NEED A HTTPGET PROXY (CLIENT CANT DO HTTP REQUESTS NORMALLY), DONT FORGET TO ENABLE HTTPREQUESTS ON THE SERVER (game.HttpService.HttpEnabled = true) - we use our own because its easy to make
 ```
 
 # Support Us:

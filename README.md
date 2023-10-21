@@ -1,6 +1,7 @@
 # Loadstring
 ## Custom HttpGet Proxy & Loadstring are required
-## Check [Full Package Releases](/releases/latest) if you don't have custom
+## Check out [Full Package Releases](https://github.com/luau/Dex/releases/latest) if you don't have custom
+## [Download Latest Release](https://github.com/luau/Dex/releases/latest/download/Package.zip)
 ## All Releases are .rbxm format (it's a model so it must be drag & dropped into studio or open there using other methods)
 ```lua
 local RepositoryName = "Dex"

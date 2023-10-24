@@ -22,7 +22,7 @@ local service = setmetatable({}, {
 
 local pcall, next, ipairs = pcall, next, ipairs
 
-local env =  _G or shared
+local env = _G or shared
 
 local req_load = require(script.Parent.loadstring) -- ! YOU'LL NEED A CUSTOM LOADSTRING MODULE
 env.loadstring = function(String)
@@ -112,11 +112,11 @@ DefaultSettings = (function()
 			_Recurse = true,
 			MaxConflictCheck = 50,
 			ShowDeprecated = false,
-			ShowHidden = false,
+			ShowHidden = true,
 			ClearOnFocus = false,
 			LoadstringInput = true,
 			NumberRounding = 3,
-			ShowAttributes = false,
+			ShowAttributes = true,
 			MaxAttributes = 50,
 			ScaleType = 1, -- 0 Full Name Shown, 1 Equal Halves
 		},
@@ -1658,6 +1658,15 @@ Main = (function()
 			IconMap = Main.LargeIcons,
 			Icon = "Script_Viewer",
 			Window = ScriptViewer.Window,
+		})
+
+		Main.CreateApp({
+			Name = "Click Part to Select",
+			IconMap = Main.LargeIcons,
+			Icon = 6,
+			OnClick = function(State)
+				Settings.Explorer.ClickSelect = State
+			end,
 		})
 
 		Lib.ShowGui(gui)

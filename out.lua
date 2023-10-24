@@ -14818,30 +14818,7 @@ local function main()
 	ScriptViewer.ViewScript = function(scr)
 		local s, source = pcall(env.decompile or function() end, scr)
 		if not s or not source then
-			source =
-				"local test = 5\n\nlocal c = test + tick()\ngame.Workspace.Board:Destroy()\nstring.match('wow\\'f',\"yes\",3.4e-5,true)\ngame. Workspace.Wow\nfunction bar() print(54) end\n string . match() string 4 .match()"
-			source = source
-				.. "\n"
-				.. [==[
-			function a.sad() end
-			function a.b:sad() end
-			function 4.why() end
-			function a b() end
-			function string.match() end
-			function string.match.why() end
-			function local() end
-			function local.thing() end
-			string  . "sad" match
-			().magnitude = 3
-			a..b
-			a..b()
-			a...b
-			a...b()
-			a....b
-			a....b()
-			string..match()
-			string....match()
-			]==]
+			source = "--[[Failed to decompile\nReason:\n" .. tostring(source) .. "\n]]"
 		end
 
 		codeFrame:SetText(source)
@@ -14921,7 +14898,7 @@ local service = setmetatable({}, {
 
 local pcall, next, ipairs = pcall, next, ipairs
 
-local env =  _G or shared
+local env = _G or shared
 
 local req_load = require(script.Parent.loadstring) -- ! YOU'LL NEED A CUSTOM LOADSTRING MODULE
 env.loadstring = function(String)
@@ -15011,11 +14988,11 @@ DefaultSettings = (function()
 			_Recurse = true,
 			MaxConflictCheck = 50,
 			ShowDeprecated = false,
-			ShowHidden = false,
+			ShowHidden = true,
 			ClearOnFocus = false,
 			LoadstringInput = true,
 			NumberRounding = 3,
-			ShowAttributes = false,
+			ShowAttributes = true,
 			MaxAttributes = 50,
 			ScaleType = 1, -- 0 Full Name Shown, 1 Equal Halves
 		},
@@ -16557,6 +16534,15 @@ Main = (function()
 			IconMap = Main.LargeIcons,
 			Icon = "Script_Viewer",
 			Window = ScriptViewer.Window,
+		})
+
+		Main.CreateApp({
+			Name = "Click Part to Select",
+			IconMap = Main.LargeIcons,
+			Icon = 6,
+			OnClick = function(State)
+				Settings.Explorer.ClickSelect = State
+			end,
 		})
 
 		Lib.ShowGui(gui)

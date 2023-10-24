@@ -5285,7 +5285,7 @@ local function main()
 			if not silent then
 				side.Hidden = false
 			end
-			updateWindows(silent)
+			-- updateWindows(silent)
 		end
 
 		funcs.Close = function(self)
@@ -14827,31 +14827,8 @@ local function main()
 
 	ScriptViewer.ViewScript = function(scr)
 		local s, source = pcall(env.decompile or function() end, scr)
-		if not s or not source then
-			source =
-				"local test = 5\n\nlocal c = test + tick()\ngame.Workspace.Board:Destroy()\nstring.match('wow\\'f',\"yes\",3.4e-5,true)\ngame. Workspace.Wow\nfunction bar() print(54) end\n string . match() string 4 .match()"
-			source = source
-				.. "\n"
-				.. [==[
-			function a.sad() end
-			function a.b:sad() end
-			function 4.why() end
-			function a b() end
-			function string.match() end
-			function string.match.why() end
-			function local() end
-			function local.thing() end
-			string  . "sad" match
-			().magnitude = 3
-			a..b
-			a..b()
-			a...b
-			a...b()
-			a....b
-			a....b()
-			string..match()
-			string....match()
-			]==]
+		if not s then
+			source = "--[[Failed to decompile\nReason:\n" .. tostring(source) .. "\n]]"
 		end
 
 		codeFrame:SetText(source)
@@ -14878,7 +14855,7 @@ local function main()
 
 		copy.MouseButton1Click:Connect(function()
 			local source = codeFrame:GetText()
-			setclipboard(source)
+			env.setclipboard(source)
 		end)
 
 		local save = Instance.new("TextButton", window.GuiElems.Content)
@@ -15007,11 +14984,11 @@ DefaultSettings = (function()
 			_Recurse = true,
 			MaxConflictCheck = 50,
 			ShowDeprecated = false,
-			ShowHidden = false,
+			ShowHidden = true,
 			ClearOnFocus = false,
 			LoadstringInput = true,
 			NumberRounding = 3,
-			ShowAttributes = false,
+			ShowAttributes = true,
 			MaxAttributes = 50,
 			ScaleType = 1, -- 0 Full Name Shown, 1 Equal Halves
 		},
@@ -15142,8 +15119,8 @@ Main = (function()
 	end
 
 	Main.Error = function(str)
-		if rconsoleprint or globalcontainer.rconsoleprint then
-			(rconsoleprint or globalcontainer.rconsoleprint)("DEX ERROR: " .. tostring(str) .. "\n")
+		if globalcontainer.rconsoleprint then
+			globalcontainer.rconsoleprint("DEX ERROR: " .. tostring(str) .. "\n")
 			coroutine.yield()
 		else
 			error(str)
@@ -15163,7 +15140,7 @@ Main = (function()
 			elseif _G.DebugLoadModel then -- Load Debug Model File
 				local model = Main.DebugModel
 				if not model then
-					model = game:GetObjects((getsynasset or globalcontainer.getsynasset)("AfterModules.rbxm"))[1]
+					model = game:GetObjects(globalcontainer.getsynasset("AfterModules.rbxm"))[1]
 				end
 
 				control = loadstring(model.Modules[name].Source)()

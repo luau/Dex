@@ -99,11 +99,11 @@ DefaultSettings = (function()
 			_Recurse = true,
 			MaxConflictCheck = 50,
 			ShowDeprecated = false,
-			ShowHidden = false,
+			ShowHidden = true,
 			ClearOnFocus = false,
 			LoadstringInput = true,
 			NumberRounding = 3,
-			ShowAttributes = false,
+			ShowAttributes = true,
 			MaxAttributes = 50,
 			ScaleType = 1, -- 0 Full Name Shown, 1 Equal Halves
 		},
@@ -234,8 +234,8 @@ Main = (function()
 	end
 
 	Main.Error = function(str)
-		if rconsoleprint or globalcontainer.rconsoleprint then
-			(rconsoleprint or globalcontainer.rconsoleprint)("DEX ERROR: " .. tostring(str) .. "\n")
+		if globalcontainer.rconsoleprint then
+			globalcontainer.rconsoleprint("DEX ERROR: " .. tostring(str) .. "\n")
 			coroutine.yield()
 		else
 			error(str)
@@ -255,7 +255,7 @@ Main = (function()
 			elseif _G.DebugLoadModel then -- Load Debug Model File
 				local model = Main.DebugModel
 				if not model then
-					model = game:GetObjects((getsynasset or globalcontainer.getsynasset)("AfterModules.rbxm"))[1]
+					model = game:GetObjects(globalcontainer.getsynasset("AfterModules.rbxm"))[1]
 				end
 
 				control = loadstring(model.Modules[name].Source)()

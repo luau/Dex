@@ -38,7 +38,7 @@ local function main()
 
 	ScriptViewer.ViewScript = function(scr)
 		local s, source = pcall(env.decompile or function() end, scr)
-		if not s then
+		if not s or not source then
 			source = "--[[Failed to decompile\nReason:\n" .. tostring(source) .. "\n]]"
 		end
 

@@ -14,7 +14,7 @@
 ]]
 local pcall, next, ipairs = pcall, next, ipairs
 local finder, globalcontainer = loadstring(
-	game:HttpGet("https://raw.githubusercontent.com/lua-u/SomeHub/main/UniversalMethodFinder.luau", true),
+	game:HttpGet("https://raw.githubusercontent.com/luau/SomeHub/main/UniversalMethodFinder.luau", true),
 	"UniversalMethodFinder"
 )()
 
@@ -69,7 +69,7 @@ local function RepoPath(url)
 
 		return path
 	else
-		return "lua-u/Dex"
+		return "luau/Dex"
 	end
 end
 globalenv = globalenv or getgenv and getgenv() or _G or shared
